@@ -1,0 +1,4 @@
+#!/bin/sh
+# Wrapper: ejecuta custom-triplesoc.py con el intérprete Python que trae el manager.
+BASE="$(cd "$(dirname "$0")/.." && pwd)"
+exec "${BASE}/framework/python/bin/python3" "$(dirname "$0")/custom-triplesoc.py" "$@"

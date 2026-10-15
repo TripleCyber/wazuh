@@ -1,0 +1,46 @@
+﻿**********************
+Inicio de la transcripción de Windows PowerShell
+Hora de inicio: 20260928103242
+Nombre de usuario: DESKTOP-3BPAU4P\omars
+Usuario RunAs: DESKTOP-3BPAU4P\omars
+Nombre de la configuración: 
+Máquina: DESKTOP-3BPAU4P (Microsoft Windows NT 10.0.26100.0)
+Aplicación host: C:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe -NoExit -ExecutionPolicy Bypass -Command Start-Transcript -Path 'C:\Users\omars\Proyectos\Triplecyber\triplesoc-manager\endpoints\install-agent.log' -Force; try { & 'C:\Users\omars\Proyectos\Triplecyber\triplesoc-manager\endpoints\install-agent-windows.ps1' } catch { Write-Host ('ERROR: ' + $_) -ForegroundColor Red }; Stop-Transcript; Write-Host ''; Write-Host 'Listo. Puedes cerrar esta ventana.' -ForegroundColor Green
+Id. de proceso: 4176
+PSVersion: 5.1.26100.9444
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.9444
+BuildVersion: 10.0.26100.9444
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+La transcripción ha comenzado. El archivo de salida es C:\Users\omars\Proyectos\Triplecyber\triplesoc-manager\endpoints\install-agent.log
+Descargando wazuh-agent-4.14.7-1.msi desde packages.wazuh.com...
+Firma verificada: CN="Wazuh, Inc", O="Wazuh, Inc", L=Campbell, S=California, C=US, SERIALNUMBER=5714547, OID.2.5.4.15=Private Organization, OID.1.3.6.1.4.1.311.60.2.1.2=Delaware, OID.1.3.6.1.4.1.311.60.2.1.3=US
+
+Name      Status
+----      ------
+WazuhSvc Running
+
+
+2026/09/28 10:36:49 wazuh-agent: INFO: Using agent name as: DESKTOP-3BPAU4P
+2026/09/28 10:36:49 wazuh-agent: INFO: Waiting for server reply
+2026/09/28 10:36:49 wazuh-agent: ERROR: Invalid password. Unable to add agent (from manager)
+2026/09/28 10:37:09 wazuh-agent: INFO: Requesting a key from server: 20.65.219.193
+2026/09/28 10:37:10 wazuh-agent: INFO: Using password specified on file: authd.pass
+2026/09/28 10:37:10 wazuh-agent: INFO: No authentication password provided
+2026/09/28 10:37:10 wazuh-agent: INFO: Using agent name as: DESKTOP-3BPAU4P
+2026/09/28 10:37:10 wazuh-agent: INFO: Waiting for server reply
+2026/09/28 10:37:10 wazuh-agent: ERROR: Invalid password. Unable to add agent (from manager)
+2026/09/28 10:37:10 wazuh-agent: INFO: Requesting a key from server: 20.65.219.193
+2026/09/28 10:37:10 wazuh-agent: INFO: Using password specified on file: authd.pass
+2026/09/28 10:37:10 wazuh-agent: INFO: No authentication password provided
+2026/09/28 10:37:10 wazuh-agent: INFO: Using agent name as: DESKTOP-3BPAU4P
+2026/09/28 10:37:10 wazuh-agent: INFO: Waiting for server reply
+2026/09/28 10:37:10 wazuh-agent: ERROR: Invalid password. Unable to add agent (from manager)
+**********************
+Fin de la transcripción de Windows PowerShell
+Hora de finalización: 20260928103728
+**********************

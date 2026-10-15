@@ -1,0 +1,17 @@
+<!-- Decoders TripleSOC. Salida del script de auditoría USB recibida como comando del logcollector:
+     ossec: output: 'triplesoc-usb': TRIPLESOC_USB status=... device="..." vid=... pid=... serial=... instance="..." blocked=yes|no
+     blocked es opcional: los equipos con el script anterior no lo envían y se decodifican igual. -->
+<decoder name="triplesoc-usb">
+  <parent>ossec</parent>
+  <type>ossec</type>
+  <prematch type="pcre2">output: 'triplesoc-usb': TRIPLESOC_USB </prematch>
+  <regex type="pcre2">status=(\S+) device="([^"]*)" vid=(\S*) pid=(\S*) serial=(\S*) instance="([^"]*)"(?: blocked=(\S+))?</regex>
+  <order>usb.status, usb.device, usb.vid, usb.pid, usb.serial, usb.instance, usb.blocked</order>
+</decoder>
+
+<decoder name="triplesoc-usb">
+  <parent>ossec</parent>
+  <type>ossec</type>
+  <regex type="pcre2">TRIPLESOC_USB status=(error) message="([^"]*)"</regex>
+  <order>usb.status, usb.message</order>
+</decoder>

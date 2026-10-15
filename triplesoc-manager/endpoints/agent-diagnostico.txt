@@ -1,0 +1,42 @@
+﻿2026/09/28 10:36:16 wazuh-agent: ERROR: Invalid password. Unable to add agent (from manager)
+2026/09/28 10:36:16 wazuh-agent: ERROR: Invalid password. Unable to add agent (from manager)
+2026/09/28 10:36:22 wazuh-agent: ERROR: Invalid password. Unable to add agent (from manager)
+2026/09/28 10:36:22 wazuh-agent: ERROR: Invalid password. Unable to add agent (from manager)
+2026/09/28 10:36:33 wazuh-agent: ERROR: Invalid password. Unable to add agent (from manager)
+2026/09/28 10:36:33 wazuh-agent: ERROR: Invalid password. Unable to add agent (from manager)
+2026/09/28 10:36:49 wazuh-agent: ERROR: Invalid password. Unable to add agent (from manager)
+2026/09/28 10:36:49 wazuh-agent: ERROR: Invalid password. Unable to add agent (from manager)
+2026/09/28 10:37:10 wazuh-agent: ERROR: Invalid password. Unable to add agent (from manager)
+2026/09/28 10:37:10 wazuh-agent: ERROR: Invalid password. Unable to add agent (from manager)
+2026/09/28 10:37:36 wazuh-agent: ERROR: Invalid password. Unable to add agent (from manager)
+2026/09/28 10:37:37 wazuh-agent: ERROR: Invalid password. Unable to add agent (from manager)
+2026/09/28 10:38:07 wazuh-agent: ERROR: Invalid password. Unable to add agent (from manager)
+2026/09/28 10:38:08 wazuh-agent: ERROR: Invalid password. Unable to add agent (from manager)
+2026/09/28 10:38:43 wazuh-agent: ERROR: Invalid password. Unable to add agent (from manager)
+2026/09/28 10:38:43 wazuh-agent: ERROR: Invalid password. Unable to add agent (from manager)
+2026/09/28 10:39:24 wazuh-agent: ERROR: Invalid password. Unable to add agent (from manager)
+2026/09/28 10:39:25 wazuh-agent: ERROR: Invalid password. Unable to add agent (from manager)
+2026/09/28 10:40:10 wazuh-agent: ERROR: Invalid password. Unable to add agent (from manager)
+2026/09/28 10:40:10 wazuh-agent: ERROR: Invalid password. Unable to add agent (from manager)
+2026/09/28 10:40:24 wazuh-agent: WARNING: Process locked due to agent is offline. Waiting for connection...
+2026/09/28 10:41:05 wazuh-agent: INFO: Agent is reloading due to shared configuration changes.
+2026/09/28 10:41:06 wazuh-agent: INFO: Monitoring output of command(30): powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File shared\triplesoc-usb-audit.ps1
+2026/09/28 10:41:11 rootcheck: WARNING: No winmalware file: './shared/win_malware_rcl.txt'
+2026/09/28 10:41:11 rootcheck: WARNING: No winapps file: './shared/win_applications_rcl.txt'
+2026/09/28 10:54:26 wazuh-agent: ERROR: Connection socket: Se ha forzado la interrupción de una conexión existente por el host remoto. (10054)
+2026/09/28 10:54:26 wazuh-agent: ERROR: (1137): Lost connection with manager. Setting lock.
+2026/09/28 10:54:26 wazuh-agent: ERROR: (1216): Unable to connect to '[20.65.219.193]:1514/tcp': 'Se ha intentado una operación de socket en una red no accesible.'.
+2026/09/28 10:54:27 wazuh-agent: WARNING: Process locked due to agent is offline. Waiting for connection...
+2026/09/28 10:54:27 wazuh-agent: WARNING: Process locked due to agent is offline. Waiting for connection...
+2026/09/28 10:54:36 wazuh-agent: ERROR: (1216): Unable to connect to '[20.65.219.193]:1514/tcp': 'Se ha intentado una operación de socket en una red no accesible.'.
+2026/09/28 10:54:46 wazuh-agent: ERROR: (1216): Unable to connect to '[20.65.219.193]:1514/tcp': 'Se ha intentado una operación de socket en una red no accesible.'.
+2026/09/28 10:56:52 wazuh-agent: WARNING: Process locked due to agent is offline. Waiting for connection...
+2026/09/28 10:56:54 wazuh-agent: WARNING: Process locked due to agent is offline. Waiting for connection...
+2026/09/28 11:25:40 wazuh-agent: INFO: Agent is reloading due to shared configuration changes.
+2026/09/28 11:25:42 wazuh-agent: INFO: Monitoring output of command(30): powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File shared\triplesoc-usb-audit.ps1
+2026/09/28 11:26:03 wazuh-agent: ERROR: (1216): Unable to connect to '[20.65.219.193]:1514/tcp': 'Se produjo un error durante el intento de conexión ya que la parte conectada no respondió adecuadamente tras un periodo de tiempo, o bien se produjo un error en la conexión establecida ya que el host conectado no ha podido responder.'.
+2026/09/28 11:26:34 wazuh-agent: ERROR: (1216): Unable to connect to '[20.65.219.193]:1514/tcp': 'Se produjo un error durante el intento de conexión ya que la parte conectada no respondió adecuadamente tras un periodo de tiempo, o bien se produjo un error en la conexión establecida ya que el host conectado no ha podido responder.'.
+2026/09/28 11:27:05 wazuh-agent: ERROR: (1216): Unable to connect to '[20.65.219.193]:1514/tcp': 'Se produjo un error durante el intento de conexión ya que la parte conectada no respondió adecuadamente tras un periodo de tiempo, o bien se produjo un error en la conexión establecida ya que el host conectado no ha podido responder.'.
+2026/09/28 11:27:36 wazuh-agent: ERROR: (1216): Unable to connect to '[20.65.219.193]:1514/tcp': 'Se produjo un error durante el intento de conexión ya que la parte conectada no respondió adecuadamente tras un periodo de tiempo, o bien se produjo un error en la conexión establecida ya que el host conectado no ha podido responder.'.
+2026/09/28 11:28:07 wazuh-agent: ERROR: (1216): Unable to connect to '[20.65.219.193]:1514/tcp': 'Se produjo un error durante el intento de conexión ya que la parte conectada no respondió adecuadamente tras un periodo de tiempo, o bien se produjo un error en la conexión establecida ya que el host conectado no ha podido responder.'.
+2026/09/28 11:28:28 wazuh-agent: ERROR: (1208): Unable to connect to enrollment service at '[20.65.219.193]:1515'

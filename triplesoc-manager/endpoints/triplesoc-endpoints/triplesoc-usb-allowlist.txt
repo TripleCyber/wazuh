@@ -1,0 +1,6 @@
+# Dispositivos USB de almacenamiento autorizados (grupo triplesoc-endpoints).
+# Una entrada por línea: número de serie, VID:PID o instance ID. '#' inicia un comentario.
+# Cualquier USB que no esté aquí genera "TripleSOC Security: Unauthorized Device Detected".
+# Ejemplo:
+# E0D55EA573DCF450E9A60F2B     # Kingston DataTraveler de TI
+# 0951:1666                    # todos los Kingston DataTraveler 3.0

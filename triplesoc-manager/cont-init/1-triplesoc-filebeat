@@ -1,0 +1,20 @@
+#!/bin/bash
+# Se ejecuta después de 1-config-filebeat (orden alfabético) y antes de arrancar Filebeat.
+# Idempotente: deja filebeat.yml sin gestión de templates (el template triplesoc-alerts
+# lo crea triplesoc-indexer/setup.sh) y sin overrides de prefijo que contradigan la imagen.
+set -e
+F=/etc/filebeat/filebeat.yml
+[ -f "$F" ] || exit 0
+
+# Quitar overrides de prefijo en el propio yml; el valor viene del manifest de la imagen.
+sed -i '/var\.index_prefix:/d' "$F"
+
+# Desactivar la carga del template legacy "wazuh".
+if grep -q '^setup\.template\.enabled:' "$F"; then
+  sed -i 's|^setup\.template\.enabled:.*|setup.template.enabled: false|' "$F"
+else
+  sed -i '1i setup.template.enabled: false' "$F"
+fi
+sed -i 's|^setup\.template\.json\.enabled:.*|setup.template.json.enabled: false|' "$F"
+
+echo "[triplesoc] filebeat: prefijo de índices desde el módulo, template legacy desactivado" >&2

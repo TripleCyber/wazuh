@@ -1,0 +1,305 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head><body style="margin:0"><title>Del USB a Teams</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lexend:wght@500;600;700&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+  :root {
+    --bg: #F4F6F3;
+    --panel: #FFFFFF;
+    --zone: #EAEFEA;
+    --ink: #161616;
+    --muted: #56605A;
+    --line: #D3DAD4;
+    --green: #178F40;
+    --green-soft: #E3F3E8;
+    --red: #BB2227;
+    --red-soft: #FBE7E7;
+    --display: "Lexend", "Segoe UI", system-ui, sans-serif;
+    --body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --bg: #111413;
+      --panel: #1A1E1C;
+      --zone: #202623;
+      --ink: #E7ECE8;
+      --muted: #A0AAA3;
+      --line: #313833;
+      --green: #2FBF62;
+      --green-soft: #173222;
+      --red: #F0565B;
+      --red-soft: #3A1D1F;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #111413;
+    --panel: #1A1E1C;
+    --zone: #202623;
+    --ink: #E7ECE8;
+    --muted: #A0AAA3;
+    --line: #313833;
+    --green: #2FBF62;
+    --green-soft: #173222;
+    --red: #F0565B;
+    --red-soft: #3A1D1F;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font: 17px/1.55 var(--body);
+    padding-inline: 20px;
+    padding-block: 36px 56px;
+  }
+  .wrap { max-width: 1040px; margin: 0 auto; display: grid; gap: 44px; }
+
+  header { display: grid; gap: 10px; max-width: 68ch; }
+  .eyebrow {
+    font: 600 12px/1 var(--display); letter-spacing: .12em; text-transform: uppercase; color: var(--green);
+  }
+  h1 { font: 700 clamp(28px, 4.2vw, 40px)/1.15 var(--display); margin: 0; text-wrap: balance; }
+  h2 { font: 600 22px/1.25 var(--display); margin: 0; text-wrap: balance; }
+  h3 { font: 600 17px/1.3 var(--display); margin: 0; }
+  p { margin: 0; }
+  .lead { color: var(--muted); font-size: 18px; }
+
+  /* Diagrama */
+  figure { margin: 0; display: grid; gap: 14px; }
+  .scroll { overflow-x: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 18px; }
+  .scroll svg { display: block; width: 100%; min-width: 760px; height: auto; }
+  figcaption { color: var(--muted); font-size: 15px; max-width: 72ch; }
+
+  svg text { font-family: var(--body); fill: var(--ink); }
+  svg .zone { fill: var(--zone); }
+  svg .zone-label { font: 600 12px var(--display); letter-spacing: .1em; fill: var(--muted); }
+  svg .node { fill: var(--panel); stroke: var(--line); stroke-width: 1.5; }
+  svg .node-alert { fill: var(--red-soft); stroke: var(--red); stroke-width: 1.5; }
+  svg .node-ok { fill: var(--green-soft); stroke: var(--green); stroke-width: 1.5; }
+  svg .node-title { font: 600 15px var(--display); }
+  svg .node-sub { font-size: 13px; fill: var(--muted); }
+  svg .num { fill: var(--ink); }
+  svg .num-text { font: 700 12px var(--display); fill: var(--panel); }
+  svg .flow { stroke: var(--green); stroke-width: 2.5; fill: none; }
+  svg .flow-alert { stroke: var(--red); stroke-width: 2.5; fill: none; }
+  svg .arrow-ok { fill: var(--green); }
+  svg .arrow-alert { fill: var(--red); }
+  svg .edge-label { font: 600 12.5px var(--body); fill: var(--green); }
+  svg .edge-label-alert { font: 600 12.5px var(--body); fill: var(--red); }
+  svg .edge-bg { fill: var(--panel); }
+  svg .time-line { stroke: var(--line); stroke-width: 2; }
+  svg .time-dot { fill: var(--green); }
+  svg .time-dot-alert { fill: var(--red); }
+  svg .time-text { font-size: 12.5px; fill: var(--muted); }
+  svg .time-strong { font: 600 12.5px var(--body); fill: var(--ink); }
+
+  /* Pasos */
+  .steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+  .step { display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: 6px 16px; padding: 18px 20px 18px 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; }
+  .step > :not(.n) { max-width: 72ch; }
+  .step .n { grid-row: span 3; width: 32px; height: 32px; border-radius: 50%; background: var(--ink); color: var(--panel); display: grid; place-items: center; font: 700 14px var(--display); }
+  .step.alert .n { background: var(--red); color: #fff; }
+  .step p { color: var(--muted); font-size: 16px; }
+  .step .see { font-size: 14.5px; color: var(--ink); }
+  .step .see b { font-weight: 600; }
+
+  .section { display: grid; gap: 18px; }
+  .cols { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+  .fact { display: grid; gap: 6px; padding-top: 14px; border-top: 2px solid var(--green); }
+  .fact p { color: var(--muted); font-size: 16px; }
+
+  .detects { display: flex; flex-wrap: wrap; gap: 10px; }
+  .chip { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px; background: var(--panel); border: 1px solid var(--line); font-size: 15.5px; }
+  .chip i { width: 8px; height: 8px; border-radius: 50%; background: var(--red); }
+  .chip.ok i { background: var(--green); }
+
+  .trace { display: grid; gap: 12px; padding: 20px; border-radius: 12px; background: var(--panel); border: 1px solid var(--line); }
+  .trace-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 14px; }
+  .trace-row span:first-child { min-width: 170px; color: var(--muted); font-size: 15px; }
+  code { font: 500 14.5px var(--mono); background: var(--green-soft); color: var(--ink); padding: 2px 8px; border-radius: 6px; overflow-wrap: anywhere; }
+
+  footer { color: var(--muted); font-size: 14px; border-top: 1px solid var(--line); padding-top: 16px; }
+</style>
+
+<div class="wrap">
+  <header>
+    <span class="eyebrow">TripleSOC · Auditoría de dispositivos</span>
+    <h1>Qué pasa cuando alguien conecta un USB no autorizado</h1>
+    <p class="lead">En menos de un minuto, el equipo lo detecta, el servidor TripleSOC lo analiza y el equipo de seguridad recibe un aviso en Microsoft Teams. Todo queda registrado para consultarlo después.</p>
+  </header>
+
+  <figure>
+    <div class="scroll">
+      <svg viewBox="0 0 1000 400" role="img" aria-label="Recorrido de una alerta: el USB se conecta al equipo, el agente lo detecta, lo envía cifrado al servidor TripleSOC, que lo analiza, lo guarda en el panel y, por ser crítico, avisa en Teams en 30 a 60 segundos.">
+        <defs>
+          <marker id="arrow-ok" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0 L10 5 L0 10 Z" class="arrow-ok"></path>
+          </marker>
+          <marker id="arrow-alert" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0 L10 5 L0 10 Z" class="arrow-alert"></path>
+          </marker>
+        </defs>
+
+        <!-- Zonas -->
+        <rect class="zone" x="16" y="20" width="318" height="280" rx="14"></rect>
+        <text class="zone-label" x="36" y="48">EN EL EQUIPO DEL USUARIO</text>
+        <rect class="zone" x="368" y="20" width="336" height="280" rx="14"></rect>
+        <text class="zone-label" x="388" y="48">SERVIDOR TRIPLESOC (AZURE)</text>
+        <rect class="zone" x="738" y="20" width="246" height="280" rx="14"></rect>
+        <text class="zone-label" x="758" y="48">AVISO Y CONSULTA</text>
+
+        <!-- 1 Conexión -->
+        <rect class="node" x="36" y="120" width="130" height="84" rx="10"></rect>
+        <circle class="num" cx="36" cy="120" r="12"></circle><text class="num-text" x="36" y="124" text-anchor="middle">1</text>
+        <text class="node-title" x="101" y="156" text-anchor="middle">Se conecta</text>
+        <text class="node-title" x="101" y="175" text-anchor="middle">un USB</text>
+
+        <!-- 2 Detección -->
+        <rect class="node-ok" x="190" y="120" width="126" height="84" rx="10"></rect>
+        <circle class="num" cx="190" cy="120" r="12"></circle><text class="num-text" x="190" y="124" text-anchor="middle">2</text>
+        <text class="node-title" x="253" y="152" text-anchor="middle">El agente</text>
+        <text class="node-title" x="253" y="171" text-anchor="middle">lo detecta</text>
+        <text class="node-sub" x="253" y="191" text-anchor="middle">revisa cada 30 s</text>
+
+        <line class="flow" x1="166" y1="162" x2="186" y2="162" marker-end="url(#arrow-ok)"></line>
+
+        <!-- 3 Análisis -->
+        <rect class="node-ok" x="398" y="110" width="150" height="104" rx="10"></rect>
+        <circle class="num" cx="398" cy="110" r="12"></circle><text class="num-text" x="398" y="114" text-anchor="middle">3</text>
+        <text class="node-title" x="473" y="146" text-anchor="middle">Analiza con</text>
+        <text class="node-title" x="473" y="165" text-anchor="middle">las reglas</text>
+        <text class="node-sub" x="473" y="186" text-anchor="middle">¿autorizado?</text>
+        <text class="node-sub" x="473" y="203" text-anchor="middle">¿qué gravedad?</text>
+
+        <!-- Equipo → Servidor -->
+        <line class="flow" x1="316" y1="162" x2="394" y2="162" marker-end="url(#arrow-ok)"></line>
+        <rect class="edge-bg" x="318" y="130" width="74" height="20" rx="4"></rect>
+        <text class="edge-label" x="355" y="144" text-anchor="middle">cifrado</text>
+
+        <!-- 4 Registro -->
+        <rect class="node" x="580" y="200" width="108" height="80" rx="10"></rect>
+        <circle class="num" cx="580" cy="200" r="12"></circle><text class="num-text" x="580" y="204" text-anchor="middle">4</text>
+        <text class="node-title" x="634" y="234" text-anchor="middle">Guarda</text>
+        <text class="node-title" x="634" y="253" text-anchor="middle">la alerta</text>
+
+        <polyline class="flow" points="473,214 473,244 576,244" marker-end="url(#arrow-ok)"></polyline>
+        <text class="edge-label" x="524" y="236" text-anchor="middle">siempre</text>
+
+        <!-- 5 Teams (crítica) -->
+        <rect class="node-alert" x="758" y="80" width="208" height="92" rx="10"></rect>
+        <circle class="num" cx="758" cy="80" r="12"></circle><text class="num-text" x="758" y="84" text-anchor="middle">5</text>
+        <text class="node-title" x="862" y="114" text-anchor="middle">Aviso en Teams</text>
+        <text class="node-sub" x="862" y="136" text-anchor="middle">"Unauthorized Device</text>
+        <text class="node-sub" x="862" y="154" text-anchor="middle">Detected"</text>
+
+        <line class="flow-alert" x1="548" y1="126" x2="754" y2="126" marker-end="url(#arrow-alert)"></line>
+        <rect class="edge-bg" x="572" y="98" width="164" height="20" rx="4"></rect>
+        <text class="edge-label-alert" x="654" y="112" text-anchor="middle">si es crítica: aviso inmediato</text>
+
+        <!-- Panel -->
+        <rect class="node" x="758" y="200" width="208" height="80" rx="10"></rect>
+        <text class="node-title" x="862" y="234" text-anchor="middle">Panel TripleSOC</text>
+        <text class="node-sub" x="862" y="254" text-anchor="middle">historial y detalle</text>
+
+        <line class="flow" x1="688" y1="240" x2="754" y2="240" marker-end="url(#arrow-ok)"></line>
+        <text class="edge-label" x="721" y="231" text-anchor="middle">consulta</text>
+
+        <!-- Línea de tiempo -->
+        <line class="time-line" x1="60" y1="352" x2="940" y2="352"></line>
+        <circle class="time-dot" cx="100" cy="352" r="6"></circle>
+        <text class="time-strong" x="100" y="378" text-anchor="middle">0 s</text>
+        <text class="time-text" x="100" y="394" text-anchor="middle">se conecta</text>
+        <circle class="time-dot" cx="253" cy="352" r="6"></circle>
+        <text class="time-strong" x="253" y="378" text-anchor="middle">hasta 30 s</text>
+        <text class="time-text" x="253" y="394" text-anchor="middle">el agente lo ve</text>
+        <circle class="time-dot" cx="473" cy="352" r="6"></circle>
+        <text class="time-strong" x="473" y="378" text-anchor="middle">+1 s</text>
+        <text class="time-text" x="473" y="394" text-anchor="middle">análisis y registro</text>
+        <circle class="time-dot-alert" cx="862" cy="352" r="7"></circle>
+        <text class="time-strong" x="862" y="378" text-anchor="middle">30 a 60 s</text>
+        <text class="time-text" x="862" y="394" text-anchor="middle">aviso en Teams</text>
+        <text class="zone-label" x="60" y="332">TIEMPO</text>
+      </svg>
+    </div>
+    <figcaption>El recorrido completo. Verde: el camino de todos los eventos. Rojo: el aviso que solo se envía cuando el dispositivo no está autorizado.</figcaption>
+  </figure>
+
+  <section class="section" aria-labelledby="pasos">
+    <h2 id="pasos">Paso a paso</h2>
+    <ol class="steps">
+      <li class="step">
+        <span class="n">1</span>
+        <h3>Se conecta un dispositivo</h3>
+        <p>Una persona conecta una memoria USB, un disco externo, un teléfono o un teclado a un equipo de la empresa.</p>
+        <p class="see"><b>Ejemplo real:</b> un mando de videojuegos conectado al portátil de prueba.</p>
+      </li>
+      <li class="step">
+        <span class="n">2</span>
+        <h3>El agente lo detecta</h3>
+        <p>Cada equipo protegido tiene un pequeño programa de TripleSOC, el agente, que revisa cada 30 segundos qué dispositivos hay conectados y lo compara con la lista de dispositivos permitidos.</p>
+        <p class="see"><b>Clave:</b> las reglas las reparte el servidor; no hay que configurar cada equipo a mano.</p>
+      </li>
+      <li class="step">
+        <span class="n">3</span>
+        <h3>El servidor lo analiza</h3>
+        <p>El agente envía el evento cifrado al servidor TripleSOC. Allí unas reglas deciden si el dispositivo está autorizado y qué gravedad tiene, en una escala de 0 a 15.</p>
+        <p class="see"><b>Resultado:</b> un dispositivo no autorizado es nivel 12, crítico.</p>
+      </li>
+      <li class="step">
+        <span class="n">4</span>
+        <h3>Queda registrado</h3>
+        <p>Toda alerta se guarda en el panel de TripleSOC con el equipo, la hora, el dispositivo y su identificador, para investigar o auditar después.</p>
+        <p class="see"><b>Dónde verlo:</b> panel TripleSOC, sección Threat Hunting.</p>
+      </li>
+      <li class="step alert">
+        <span class="n">5</span>
+        <h3>Aviso inmediato en Teams</h3>
+        <p>Si la alerta es crítica, el equipo de seguridad recibe un mensaje en Microsoft Teams con qué pasó, en qué equipo y cuándo.</p>
+        <p class="see"><b>Tiempo total:</b> entre 30 y 60 segundos desde la conexión.</p>
+      </li>
+    </ol>
+  </section>
+
+  <section class="section" aria-labelledby="detecta">
+    <h2 id="detecta">Qué se detecta</h2>
+    <div class="detects">
+      <span class="chip"><i></i>Memorias USB y discos externos</span>
+      <span class="chip"><i></i>Teléfonos y tabletas</span>
+      <span class="chip"><i></i>Teclados, ratones y mandos USB</span>
+      <span class="chip ok"><i></i>Dispositivos autorizados: se registran sin aviso</span>
+    </div>
+    <p class="lead">Los teclados y ratones se vigilan porque existen memorias USB que se hacen pasar por un teclado para escribir órdenes solas en el equipo.</p>
+  </section>
+
+  <section class="section" aria-labelledby="confianza">
+    <h2 id="confianza">Por qué es confiable</h2>
+    <div class="cols">
+      <div class="fact">
+        <h3>Canal protegido</h3>
+        <p>Cada equipo tiene su propia clave. Solo los equipos registrados pueden enviar información al servidor, y todo viaja cifrado.</p>
+      </div>
+      <div class="fact">
+        <h3>Gestión central</h3>
+        <p>Las reglas y la lista de dispositivos permitidos se cambian una vez en el servidor y llegan solas a todos los equipos.</p>
+      </div>
+      <div class="fact">
+        <h3>Trazable de principio a fin</h3>
+        <p>El mensaje de Teams incluye un ID de evento. Con ese mismo ID se encuentra la alerta original en el panel.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="traza">
+    <h2 id="traza">Cómo se comprueba una alerta</h2>
+    <div class="trace">
+      <div class="trace-row"><span>1. En el mensaje de Teams</span><span>ID de evento <code>1790711202.1291246</code></span></div>
+      <div class="trace-row"><span>2. En el panel TripleSOC</span><span>Threat Hunting → buscar <code>id:"1790711202.1291246"</code></span></div>
+      <div class="trace-row"><span>3. Resultado</span><span>Aparece la alerta original: equipo DESKTOP-3BPAU4P, 29 sept 2026, mando USB no autorizado.</span></div>
+    </div>
+  </section>
+
+  <footer>Datos de la prueba realizada el 29 de septiembre de 2026 en el entorno de desarrollo de TripleSOC.</footer>
+</div>
+</body></html>

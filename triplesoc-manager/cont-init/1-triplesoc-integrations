@@ -1,0 +1,20 @@
+#!/bin/bash
+# Instala en cada arranque la integración, las reglas/decoders y el grupo de endpoints
+# TripleSOC desde la imagen (/opt/triplesoc) hacia los volúmenes persistentes del manager.
+set -e
+SRC=/opt/triplesoc
+install -o root -g wazuh -m 0750 "$SRC/integrations/custom-triplesoc"    /var/ossec/integrations/custom-triplesoc
+install -o root -g wazuh -m 0750 "$SRC/integrations/custom-triplesoc.py" /var/ossec/integrations/custom-triplesoc.py
+install -o wazuh -g wazuh -m 0660 "$SRC/rules/triplesoc_rules.xml"      /var/ossec/etc/rules/triplesoc_rules.xml
+install -o wazuh -g wazuh -m 0660 "$SRC/decoders/triplesoc_decoders.xml" /var/ossec/etc/decoders/triplesoc_decoders.xml
+
+# Grupo triplesoc-endpoints (configuración centralizada de agentes): agent.conf y script
+# vienen de la imagen; la lista de permitidos solo se crea si no existe, para no pisar
+# los dispositivos que el equipo haya autorizado en el servidor.
+G=/var/ossec/etc/shared/triplesoc-endpoints
+install -d -o wazuh -g wazuh -m 0770 "$G"
+install -o wazuh -g wazuh -m 0660 "$SRC/endpoints/triplesoc-endpoints/agent.conf"             "$G/agent.conf"
+install -o wazuh -g wazuh -m 0660 "$SRC/endpoints/triplesoc-endpoints/triplesoc-usb-audit.ps1" "$G/triplesoc-usb-audit.ps1"
+[ -f "$G/triplesoc-usb-allowlist.txt" ] || \
+  install -o wazuh -g wazuh -m 0660 "$SRC/endpoints/triplesoc-endpoints/triplesoc-usb-allowlist.txt" "$G/triplesoc-usb-allowlist.txt"
+echo "[triplesoc] integración, reglas, decoders y grupo triplesoc-endpoints instalados" >&2

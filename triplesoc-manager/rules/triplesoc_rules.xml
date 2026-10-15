@@ -1,0 +1,173 @@
+<!-- Reglas TripleSOC. 100900: alerta crítica simulada para probar la integración de webhooks.
+     Solo se dispara con el texto TRIPLESOC_INTEGRATION_TEST en un log monitoreado. -->
+<group name="triplesoc,">
+  <rule id="100900" level="12">
+    <match>TRIPLESOC_INTEGRATION_TEST</match>
+    <description>TripleSOC: prueba de integración (alerta crítica simulada)</description>
+    <group>triplesoc_test,</group>
+  </rule>
+</group>
+
+<!-- Auditoría USB en endpoints (grupo triplesoc-endpoints, script triplesoc-usb-audit.ps1).
+     530 = salida de comandos del logcollector ("ossec: output: ..."). -->
+<group name="triplesoc,triplesoc_usb,">
+  <rule id="100910" level="0">
+    <if_sid>530</if_sid>
+    <match>output: 'triplesoc-usb': TRIPLESOC_USB </match>
+    <description>TripleSOC Security: evento de auditoría USB</description>
+  </rule>
+
+  <rule id="100911" level="12">
+    <if_sid>100910</if_sid>
+    <field name="usb.status">^unauthorized$</field>
+    <description>TripleSOC Security: Unauthorized Device Detected</description>
+    <mitre>
+      <id>T1200</id>
+      <id>T1091</id>
+      <id>T1052.001</id>
+    </mitre>
+    <group>triplesoc_unauthorized_device,pci_dss_10.6.1,gdpr_IV_35.7.d,</group>
+  </rule>
+
+  <!-- El mismo caso, pero el equipo ya tiene el almacenamiento USB bloqueado: el intento queda
+       registrado sin nivel crítico (no avisa a Teams ni al webhook) porque ya está contenido. -->
+  <rule id="100914" level="7">
+    <if_sid>100911</if_sid>
+    <field name="usb.blocked">^yes$</field>
+    <description>TripleSOC Security: Unauthorized USB device blocked by policy</description>
+    <mitre>
+      <id>T1200</id>
+      <id>T1052.001</id>
+    </mitre>
+    <group>triplesoc_unauthorized_device,triplesoc_usb_blocked,pci_dss_10.6.1,gdpr_IV_35.7.d,</group>
+  </rule>
+
+  <rule id="100912" level="3">
+    <if_sid>100910</if_sid>
+    <field name="usb.status">^authorized$</field>
+    <description>TripleSOC Security: dispositivo USB autorizado conectado</description>
+  </rule>
+
+  <rule id="100913" level="5">
+    <if_sid>100910</if_sid>
+    <field name="usb.status">^error$</field>
+    <description>TripleSOC Security: error en el script de auditoría USB</description>
+  </rule>
+</group>
+
+<!-- Carril rápido (triplesoc-responder lo lee en tiempo real del archivo de alertas).
+     100920: Windows registra cada disco que aparece (canal Partition/Diagnostic, evento 1006) y el
+     agente lo envía al instante, sin esperar al sondeo de la auditoría USB. BusType 7 = USB; con
+     capacidad 0 el evento es la retirada del disco. El grupo es distinto de triplesoc_usb a propósito:
+     es una señal, no una alerta para agrupar en incidentes (eso lo sigue haciendo la 100911).
+     Cuelgan de la 60009 y no de la 60000: esa regla genérica de Wazuh (nivel 0, eventos informativos)
+     se evalúa primero y se queda con el evento, así que una hija directa de la 60000 nunca se mira.
+     100921/100922: el script de respuesta del equipo confirma en su registro que se ejecutó. -->
+<group name="triplesoc,triplesoc_fast_lane,">
+  <rule id="100920" level="3">
+    <if_sid>60009</if_sid>
+    <field name="win.system.providerName">^Microsoft-Windows-Partition$</field>
+    <field name="win.system.eventID">^1006$</field>
+    <field name="win.eventdata.busType">^7$</field>
+    <field name="win.eventdata.capacity" negate="yes">^0$</field>
+    <description>TripleSOC Security: USB storage attached (real-time signal)</description>
+    <options>no_full_log</options>
+    <mitre>
+      <id>T1200</id>
+      <id>T1091</id>
+    </mitre>
+    <group>triplesoc_usb_signal,</group>
+  </rule>
+
+  <!-- Dispositivo de entrada USB (ratón, teclado o "BadUSB") que arranca por primera vez en un puerto:
+       canal Kernel-PnP/Configuration, evento 410, instancia HID\VID_xxxx&PID_xxxx\... No se bloquea solo
+       (podría dejar el equipo sin ratón o teclado): el carril rápido lo enseña y lo deja para una persona. -->
+  <rule id="100928" level="3">
+    <if_sid>60009</if_sid>
+    <field name="win.system.providerName">^Microsoft-Windows-Kernel-PnP$</field>
+    <field name="win.system.eventID">^410$</field>
+    <field name="win.eventdata.deviceInstanceId">^HID\.VID_</field>
+    <description>TripleSOC Security: USB input device attached (real-time signal)</description>
+    <options>no_full_log</options>
+    <mitre>
+      <id>T1200</id>
+    </mitre>
+    <group>triplesoc_hid_signal,</group>
+  </rule>
+
+  <!-- DIAGNÓSTICO TEMPORAL (13-10): la 100920 no saltó con un USB real. Esta recoge cualquier evento del
+       mismo canal que no cumpla las condiciones de arriba, para ver qué campos llegan de verdad (o si
+       no llega nada del agente). Quitar cuando la 100920 esté comprobada. -->
+  <rule id="100927" level="3">
+    <if_sid>60009</if_sid>
+    <field name="win.system.providerName">Partition|Kernel-PnP</field>
+    <description>TripleSOC diagnostic: disk event received from the endpoint</description>
+    <group>triplesoc_diagnostic,</group>
+  </rule>
+
+  <rule id="100921" level="3">
+    <match>almacenamiento USB bloqueado (codigo</match>
+    <description>TripleSOC Security: endpoint confirmed the USB storage block</description>
+    <group>triplesoc_response_ack,</group>
+  </rule>
+
+  <rule id="100922" level="3">
+    <match>almacenamiento USB habilitado (codigo</match>
+    <description>TripleSOC Security: endpoint confirmed USB storage was re-enabled</description>
+    <group>triplesoc_response_ack,</group>
+  </rule>
+
+  <!-- Teléfonos y tabletas en modo transferencia de archivos (MTP). Windows anota el arranque del
+       controlador MTP en cada conexión (canal WPD-MTPClassDriver/Operational, evento 1000), pero sin
+       decir qué dispositivo es: por eso la lista de autorizados la aplica el script del equipo, que
+       responde con 100924 (bloqueó), 100926 (todos autorizados, no cambió nada) o 100925 (deshecho). -->
+  <rule id="100923" level="3">
+    <if_sid>60009</if_sid>
+    <field name="win.system.providerName">^Microsoft-Windows-WPD-MTPClassDriver$</field>
+    <field name="win.system.eventID">^1000$</field>
+    <description>TripleSOC Security: phone connected in file-transfer mode (real-time signal)</description>
+    <options>no_full_log</options>
+    <mitre>
+      <id>T1200</id>
+      <id>T1052.001</id>
+    </mitre>
+    <group>triplesoc_usb_signal,</group>
+  </rule>
+
+  <rule id="100924" level="3">
+    <match>telefonos USB bloqueados (codigo</match>
+    <description>TripleSOC Security: endpoint confirmed the phone block</description>
+    <group>triplesoc_response_ack,</group>
+  </rule>
+
+  <rule id="100925" level="3">
+    <match>telefonos USB habilitados (codigo</match>
+    <description>TripleSOC Security: endpoint confirmed phones were re-enabled</description>
+    <group>triplesoc_response_ack,</group>
+  </rule>
+
+  <rule id="100926" level="3">
+    <match>sin telefonos por bloquear (codigo</match>
+    <description>TripleSOC Security: endpoint found no unauthorized phone to block</description>
+    <group>triplesoc_response_ack,</group>
+  </rule>
+
+  <!-- Ratones y teclados USB (triplesoc-input.ps1): mismas tres confirmaciones que los teléfonos. -->
+  <rule id="100929" level="3">
+    <match>entrada USB bloqueada (codigo</match>
+    <description>TripleSOC Security: endpoint confirmed the USB input device block</description>
+    <group>triplesoc_response_ack,</group>
+  </rule>
+
+  <rule id="100930" level="3">
+    <match>entrada USB habilitada (codigo</match>
+    <description>TripleSOC Security: endpoint confirmed USB input devices were re-enabled</description>
+    <group>triplesoc_response_ack,</group>
+  </rule>
+
+  <rule id="100931" level="3">
+    <match>sin entrada USB por bloquear (codigo</match>
+    <description>TripleSOC Security: endpoint found no unauthorized USB input device to block</description>
+    <group>triplesoc_response_ack,</group>
+  </rule>
+</group>
