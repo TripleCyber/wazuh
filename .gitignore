@@ -3,3 +3,6 @@
 *.b64
 .env
 .env.*
+*.log
+secret/
+triplesoc-manager/endpoints/agent-diagnostico.txt
