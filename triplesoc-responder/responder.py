@@ -337,6 +337,29 @@ def _ask_compatible(key, question):
         return json.loads(json.loads(resp.read())["choices"][0]["message"]["content"])
 
 
+# Guardarraíles de la IA (documento enjambre-siem-xdr, 5.4). Los textos del incidente salen de logs que un
+# atacante controla en parte (nombres de dispositivo, User-Agent, rutas...). Si alguno intenta dar órdenes a la
+# IA, o el incidente contiene las reglas 10094x que lo detectan en el manager, la IA no se consulta.
+PROMPT_INJECTION_RULES = {"100940", "100941", "100942", "100943"}
+PROMPT_INJECTION_RE = re.compile(
+    r"(ignore|disregard|forget|override)\W+(all\W+|any\W+|the\W+|your\W+)*(previous|prior|above|earlier|system)\W+"
+    r"(instructions|rules|prompts?|directives)"
+    r"|ignor[ae]\w*\W+(todas\W+)?(las\W+)?(instrucciones|reglas)\W+(anteriores|previas)"
+    r"|(mark|classify|flag|label|treat)\W+(this|it|the\W+alert)\W+as\W+(a\W+)?(false\W+positive|benign|harmless|safe)"
+    r"|m[aá]rca(lo|la|r)\W+como\W+(un\W+)?(falso\W+positivo|benign[oa]|inofensiv[oa]|segur[oa])"
+    r"|(reveal|print|show)\W+(your\W+|the\W+)?system\W+prompt|you\W+are\W+now\W+(an?|the|in)\W"
+    r"|new\W+instructions\W*:|nuevas\W+instrucciones\W*:", re.I)
+
+
+def prompt_injection(inc):
+    """¿El incidente trae texto que intenta manipular a la IA? Devuelve el motivo o None."""
+    if any(str(r.get("id")) in PROMPT_INJECTION_RULES for r in inc.get("rules") or []):
+        return "the manager flagged a prompt-injection attempt in these alerts"
+    text = json.dumps({k: inc.get(k) for k in ("title", "rules", "mitre", "agent")}, ensure_ascii=False, default=str)
+    m = PROMPT_INJECTION_RE.search(text)
+    return f'the alerts contain text that tries to instruct the AI ("{m.group(0)[:60]}")' if m else None
+
+
 def decide_ai(inc):
     """Pide la decisión a la IA. Devuelve (acción, motivo, confianza) o None si no hay IA disponible.
 
@@ -448,9 +471,26 @@ def decide(inc):
                 "new storage devices cannot be used. Phones and input devices are not covered by this block: review "
                 "the alerts if the device is one of them. To allow USB storage again, use Undo on the incident "
                 "where the block was approved.", 0.0, "containment-check", CONTAINED_LABEL)
-    ai = decide_ai(inc)
+    injected = prompt_injection(inc)
+    if injected:
+        log(f"GUARDIA IA: {inc['incident_id']}: {injected}; decide la tabla fija")
+    ai = None if injected else decide_ai(inc)
     action, reason, confidence = ai or decide_playbook(inc)
     engine = f"ai:{AI_MODEL}" if ai else ENGINE
+    if injected:
+        reason += f" The AI was not consulted: {injected}, so the fixed playbook decided."
+        engine += "+ai-guard"
+    # Techo de severidad: en un incidente alto o crítico la IA puede elegir una contención más suave, pero no
+    # dejarlo sin contener si la tabla fija tiene una (un log manipulado no puede "apagar" la respuesta).
+    if ai and action == "manual_review" and inc.get("severity_rank", 0) >= 3:
+        pb_action, pb_reason, pb_conf = decide_playbook(inc)
+        if pb_action != "manual_review":
+            log(f"GUARDIA IA: {inc['incident_id']}: la IA propuso solo revisión en un incidente "
+                f"{inc.get('severity')}; se mantiene {pb_action}")
+            action, confidence = pb_action, pb_conf
+            reason = (pb_reason + " The AI suggested only a manual review, but high and critical incidents keep the "
+                      "playbook containment (AI reason: " + reason[:200] + ")")
+            engine += "+severity-floor"
     target = host
     if action == "block_ip":
         target = source_ip(inc)

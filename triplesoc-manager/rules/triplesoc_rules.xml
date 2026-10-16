@@ -171,3 +171,50 @@
     <group>triplesoc_response_ack,</group>
   </rule>
 </group>
+
+<!-- Inyección de prompts contra la IA del SOC (documento enjambre-siem-xdr, sección 5.4): un log con
+     texto que intenta dar órdenes a la IA ("ignore previous instructions", "márcalo como falso positivo").
+     Se enganchan como hijas de los eventos web, syslog y Windows; 100943 recoge el resto de logs.
+     Nivel 12: avisa por Teams. Responder no consulta a la IA en los incidentes que contienen estas reglas. -->
+<var name="TSOC_PROMPT_INJECTION">(?i)((ignore|disregard|forget|override)\W+(all\W+|any\W+|the\W+|your\W+)*(previous|prior|above|earlier|system)\W+(instructions|rules|prompts?|directives)|ignor[ae]\w*\W+(todas\W+)?(las\W+)?(instrucciones|reglas)\W+(anteriores|previas)|(mark|classify|flag|label|treat)\W+(this|it|the\W+alert)\W+as\W+(a\W+)?(false\W+positive|benign|harmless|safe)|m[aá]rca(lo|la|r)\W+como\W+(un\W+)?(falso\W+positivo|benign[oa]|inofensiv[oa]|segur[oa])|(reveal|print|show)\W+(your\W+|the\W+)?system\W+prompt|you\W+are\W+now\W+(an?|the|in)\W|new\W+instructions\W*:|nuevas\W+instrucciones\W*:)</var>
+<group name="triplesoc,triplesoc_ai_guard,">
+
+  <rule id="100940" level="12">
+    <if_group>web</if_group>
+    <regex type="pcre2">$TSOC_PROMPT_INJECTION</regex>
+    <description>TripleSOC AI guard: web request carries text that tries to instruct the SOC AI (prompt injection)</description>
+    <mitre>
+      <id>T1562</id>
+    </mitre>
+    <group>triplesoc_prompt_injection,</group>
+  </rule>
+
+  <rule id="100941" level="12">
+    <if_group>syslog</if_group>
+    <regex type="pcre2">$TSOC_PROMPT_INJECTION</regex>
+    <description>TripleSOC AI guard: system log carries text that tries to instruct the SOC AI (prompt injection)</description>
+    <mitre>
+      <id>T1562</id>
+    </mitre>
+    <group>triplesoc_prompt_injection,</group>
+  </rule>
+
+  <rule id="100942" level="12">
+    <if_group>windows</if_group>
+    <regex type="pcre2">$TSOC_PROMPT_INJECTION</regex>
+    <description>TripleSOC AI guard: Windows event carries text that tries to instruct the SOC AI (prompt injection)</description>
+    <mitre>
+      <id>T1562</id>
+    </mitre>
+    <group>triplesoc_prompt_injection,</group>
+  </rule>
+
+  <rule id="100943" level="12">
+    <regex type="pcre2">$TSOC_PROMPT_INJECTION</regex>
+    <description>TripleSOC AI guard: log carries text that tries to instruct the SOC AI (prompt injection)</description>
+    <mitre>
+      <id>T1562</id>
+    </mitre>
+    <group>triplesoc_prompt_injection,</group>
+  </rule>
+</group>

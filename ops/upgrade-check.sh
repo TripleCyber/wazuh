@@ -67,8 +67,8 @@ for f in /var/ossec/etc/rules/triplesoc_rules.xml /var/ossec/etc/decoders/triple
   [ -n "$a" ] && [ "$a" = "$b" ] && ok "$(basename "$f") instalado (igual que la imagen)" || fail "$(basename "$f") ausente o distinto de la imagen"
 done
 n=$(int "$(mx grep -c '<rule id="1009' /var/ossec/etc/rules/triplesoc_rules.xml)")
-[ "${n:-0}" -ge 18 ] && ok "$n reglas propias 1009xx" || fail "solo ${n:-0} reglas propias 1009xx (esperadas ≥ 18)"
-for r in 100911 100928 100929; do
+[ "$n" -ge 22 ] && ok "$n reglas propias 1009xx" || fail "solo $n reglas propias 1009xx (esperadas ≥ 22)"
+for r in 100911 100928 100929 100940 100943; do
   mx grep -q "rule id=\"$r\"" /var/ossec/etc/rules/triplesoc_rules.xml && ok "regla $r presente" || fail "regla $r no encontrada"
 done
 for f in custom-triplesoc custom-triplesoc.py; do
@@ -136,6 +136,8 @@ for c in triplesoc-responder triplesoc-incidents triplesoc-rulesmith; do
   tb=$(docker logs --since 30m "$c-$SID" 2>&1 | grep -c 'Traceback')
   [ "${tb:-0}" -eq 0 ] && ok "$c sin errores en 30 min" || fail "$c: $tb Traceback en 30 min"
 done
+docker exec "triplesoc-responder-$SID" grep -q 'def prompt_injection' /app/responder.py 2>/dev/null \
+  && ok "Responder con guardarraíles de IA (inyección + techo de severidad)" || fail "Responder sin guardarraíles de IA"
 docker exec "triplesoc-webhook-receiver-$SID" wget -qO- http://127.0.0.1:8080/ >/dev/null 2>&1 \
   && ok "receptor de webhooks responde" || fail "receptor de webhooks no responde"
 
