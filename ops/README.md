@@ -1,10 +1,11 @@
 # ops — operación y actualizaciones de TripleSOC
 
-Scripts del *Plan de Actualización Continua TripleSOC*. Se ejecutan en el servidor (crypto-dev-idp01) desde `/opt/triplesoc/src/ops`. Ninguno cambia el stack.
+Scripts del *Plan de Actualización Continua TripleSOC*. Se ejecutan en el servidor (crypto-dev-idp01) desde `/opt/triplesoc/src/ops`. Ninguno cambia el stack, salvo `recibir-version.sh promover` (y `ensayo`), que es la única puerta de entrada de una versión nueva.
 
 | Script | Fase | Qué hace |
 |---|---|---|
 | `upgrade-check.sh` | 1 | Comprueba en un minuto que todo lo propio sigue en pie: imágenes del compose (y su LABEL `coolify.managed`), contenedores healthy, `wazuh-analysisd -t`, reglas, decoders e integraciones instalados igual que en la imagen, Teams, alertas que llegan a `triplesoc-alerts-*` y ningún `wazuh-alerts-*` nuevo, el grupo `triplesoc-endpoints`, la marca del dashboard (6 módulos, incluida la capa traductora, + CSS), el contrato de esquema en cada servicio y los servicios Responder, Incidents y Rulesmith junto con el receptor. Sale con código 0 si está **VERDE** y 1 si está **ROJO**. |
+| `recibir-version.sh` | 3 | **Recibir una versión nueva sin romper nada**, siempre igual: comprobaciones previas (stack en VERDE, disco con margen, capa traductora de esa versión mayor, mismo motor OpenSearch) → copia de seguridad → candidatas → canario + set de oro → (con `promover`) indexer, manager y dashboard → alertas nuevas llegando + `upgrade-check` → si algo falla, **vuelve solo** a la versión anterior. `probar X.Y.Z` no toca el stack; `ensayo` simula una promoción y fuerza la vuelta atrás. Informe en `/opt/triplesoc/releases/`. |
 | `sbom.sh` | Transparencia | SBOM CycloneDX (Syft) + vulnerabilidades (Trivy) + resumen de licencias de cada imagen del compose. Deja el resultado en `/opt/triplesoc/sbom/<fecha>/RESUMEN.md`, con el enlace `ultimo`. |
 | `schema-lint.sh` | 2 | Vigilante de la capa traductora: falla si un servicio o pantalla vuelve a escribir a mano el índice de alertas o un campo de Wazuh (`rule.level`, `agent.name`...). |
 | `schema-test.py` · `schema-test.js` | 2 | Set de oro: con el adaptador 4.x, la capa produce exactamente las consultas que antes estaban escritas a mano (Python en cada imagen de servicio y JS con el node del dashboard). |

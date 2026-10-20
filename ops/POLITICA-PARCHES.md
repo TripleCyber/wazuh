@@ -37,9 +37,9 @@ La versión 5.x de Wazuh queda fuera del ciclo automático hasta que exista su a
 2. **Construir:** se reconstruye la imagen afectada con el `build.sh` de su carpeta.
    - Servicios propios: se sube la versión de la base o del paquete.
    - Capa Wazuh: se usa la versión de Wazuh corregida (`./build.sh 4.14.8`). Nuestra capa se vuelve a aplicar encima y el build falla si Wazuh movió algo.
-3. **Validar en el canario:** `SID=<canario> ops/upgrade-check.sh`, `ops/schema-lint.sh`, `ops/schema-test.*` y `ops/ai-guard-test.py` tienen que dar VERDE.
-4. **Respaldo:** `/opt/triplesoc/backup-<fecha>-<motivo>`, más una etiqueta `<imagen>:<versión>-backup-<fecha>` para volver atrás en un minuto.
-5. **Promover** al stack y repetir `ops/upgrade-check.sh`. Si sale ROJO, se vuelve a la etiqueta de respaldo.
+3. **Probar:** `ops/recibir-version.sh probar 4.14.9` hace el respaldo, construye las candidatas y pasa el canario y el set de oro sin tocar el stack.
+4. **Promover:** `ops/recibir-version.sh promover 4.14.9`. Repite las comprobaciones, promociona en el orden de Wazuh y verifica en vivo; si algo sale ROJO, vuelve solo a las etiquetas `<tag>-pre-<fecha>`.
+5. **Nunca a mano:** ninguna versión de Wazuh entra por otro camino. Un cambio de motor OpenSearch o de versión mayor (5.x) se rechaza y se planifica aparte.
 6. **Evidencia:** un nuevo `sbom.sh` que muestre la vulnerabilidad cerrada, y un commit en el repositorio.
 
 ## 5. Excepciones (cuando el parche no existe todavía)
