@@ -82,6 +82,19 @@ e=$(int "$(mx sh -c "tail -n 2000 /var/ossec/logs/integrations.log 2>/dev/null |
 [ "${e:-0}" -eq 0 ] && ok "integrations.log sin errores en 24 h" || warn "integrations.log: $e líneas con error en 24 h (envíos a Teams o al receptor)"
 
 # ------------------------------------------------------------------ 4. tubería de datos
+# ------------------------------------------------------------------ 4a. disco y bloqueos del indexer
+# Lección del 20-10: al pasar del 90 % de disco, OpenSearch puso cluster.blocks.create_index=true y no lo
+# quitó al bajar. Con el bloqueo puesto, el índice diario de alertas de las 00:00 UTC no se podría crear.
+sec "Disco y bloqueos del indexer"
+pct=$(int "$(q '_cat/allocation?h=disk.percent' | tr -d ' ' | head -1)")
+if   [ "$pct" -ge 85 ]; then fail "disco del indexer al ${pct} % (al 90 % bloquea índices nuevos y al 95 % pasa a solo lectura)"
+elif [ "$pct" -ge 80 ]; then warn "disco del indexer al ${pct} % (ampliar antes de actualizar versiones)"
+else ok "disco del indexer al ${pct} %"; fi
+blk=$(q '_cluster/state/blocks' | grep -o '"description":"[^"]*"' | cut -d'"' -f4 | tr '\n' ';')
+[ -z "$blk" ] && ok "sin bloqueos en el clúster" || fail "bloqueos en el clúster: $blk (revisar disco y quitar con _cluster/settings)"
+ro=$(q '_all/_settings/index.blocks.read_only_allow_delete?flat_settings=true' | grep -c '"true"')
+[ "${ro:-0}" -eq 0 ] && ok "ningún índice en solo lectura" || fail "$ro índices en solo lectura por disco"
+
 sec "Tubería de alertas (Filebeat → triplesoc-alerts-*)"
 mx grep -q 'default: triplesoc-alerts-' /usr/share/filebeat/module/wazuh/alerts/manifest.yml \
   && ok "Filebeat escribe en triplesoc-alerts-*" || fail "el prefijo de Filebeat ya no es triplesoc-alerts- (las alertas irían a wazuh-alerts-*)"
