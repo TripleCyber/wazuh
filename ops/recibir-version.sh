@@ -68,10 +68,23 @@ wait_healthy() {  # hasta 10 min por contenedor
   local c s i; c=$(ctr "$1")
   for i in $(seq 1 120); do
     s=$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' "$c" 2>/dev/null)
-    [ "$s" = healthy ] && return 0
+    [ "$s" = healthy ] && break
     sleep 5
   done
-  echo "    estado de $c: ${s:-no existe}"; return 1
+  [ "$s" = healthy ] || { echo "    estado de $c: ${s:-no existe}"; return 1; }
+  # Ensayo del 20-10: el contenedor del indexer sale "healthy" en cuanto responde el puerto, pero el clúster
+  # sigue en red unos segundos mientras carga los shards. Hasta que no está yellow/green no se sigue.
+  [ "$1" = indexer ] || return 0
+  for i in $(seq 1 30); do
+    q '_cluster/health' | grep -qE '"status":"(green|yellow)"' && return 0
+    sleep 10
+  done
+  echo "    el clúster del indexer no pasa de red en 5 min"; return 1
+}
+check() {  # upgrade-check con un reintento al minuto (un estado transitorio no debe disparar una vuelta atrás)
+  bash "$SRC/ops/upgrade-check.sh" > "$OUT/$1.log" 2>&1 && return 0
+  info "upgrade-check ROJO; reintento en 60 s por si es un estado transitorio"; sleep 60
+  bash "$SRC/ops/upgrade-check.sh" > "$OUT/$1.log" 2>&1
 }
 
 echo "TripleSOC · recibir versión · modo $MODE · versión $V · $(date -u '+%F %T') UTC"
@@ -154,7 +167,7 @@ rollback() {
     docker tag "${BKP[$k]}" "${TAG[$k]}" && up_svc "$k" && wait_healthy "$k" \
       && ok "$k de vuelta en $(id_of "${TAG[$k]}")" || { fail "$k NO ha vuelto: revisar a mano (copia en ${BKP[$k]})"; rc=1; }
   done
-  if [ "$rc" = 0 ] && bash "$SRC/ops/upgrade-check.sh" > "$OUT/check-tras-rollback.log" 2>&1; then
+  if [ "$rc" = 0 ] && check check-tras-rollback; then
     ok "upgrade-check VERDE tras la vuelta atrás"; echo; echo "RESULTADO: VUELTA ATRÁS HECHA · el stack está como antes ($1)"; exit 2
   fi
   fail "upgrade-check tras la vuelta atrás: ver check-tras-rollback.log"
@@ -183,7 +196,7 @@ case " $COMPONENTES " in *" manager "*|*" indexer "*)
   [ "${n:-0}" -gt 0 ] && ok "llegan alertas nuevas al índice ($n desde $T0): manager → Filebeat → indexer funciona" \
     || rollback "no llega ninguna alerta nueva en 10 min"
 esac
-if bash "$SRC/ops/upgrade-check.sh" > "$OUT/check-despues.log" 2>&1; then ok "upgrade-check VERDE ($(grep -c '  OK ' "$OUT/check-despues.log") OK, $(grep -c '  WARN ' "$OUT/check-despues.log") avisos)"
+if check check-despues; then ok "upgrade-check VERDE ($(grep -c '  OK ' "$OUT/check-despues.log") OK, $(grep -c '  WARN ' "$OUT/check-despues.log") avisos)"
 else fail "upgrade-check ROJO:"; grep '  FAIL' "$OUT/check-despues.log" | sed 's/^/    /'; rollback "upgrade-check ROJO tras promocionar"; fi
 [ "$MODE" = ensayo ] && rollback "simulacro: se fuerza la vuelta atrás para probarla"
 
