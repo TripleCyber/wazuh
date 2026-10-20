@@ -1,0 +1,32 @@
+{
+  "_doc": "Etiquetas del set de oro TripleSOC (documento enjambre 5.4). Las pone el analista por regla y en el contexto de este entorno (PC de pruebas DESKTOP-3BPAU4P y servidor Amazon Linux). expected = lo que el pipeline DEBE hacer con esa alerta: contain (proponer una contención del catálogo), review (incidente alto o crítico sin acción automática: solo revisión) o ignore (no merece incidente alto: el Responder no actúa). verdict = la verdad de seguridad: positive (amenaza o prueba autorizada de amenaza), benign, finding (hallazgo de configuración), test (prueba de la plataforma). Pendiente de revisión humana por muestreo (columna reviewed_by del set).",
+  "version": "2026-10-20",
+  "author": "analista TripleSOC, pendiente de revisión humana",
+  "rules": {
+    "100911": {"verdict": "positive", "expected": "contain", "why": "Dispositivo USB no autorizado: alerta crítica; se contiene bloqueando el almacenamiento, el teléfono o el ratón/teclado según el tipo. En dev son pruebas autorizadas del usuario, que simulan la amenaza real."},
+    "100913": {"verdict": "positive", "expected": "contain", "why": "Variante del dispositivo no autorizado."},
+    "100914": {"verdict": "benign", "expected": "ignore", "why": "El USB ya estaba bloqueado por política: la defensa funcionó, no hay nada que contener."},
+    "100921": {"verdict": "benign", "expected": "ignore", "why": "Confirmación del endpoint de una acción de respuesta (eco de la propia plataforma)."},
+    "100922": {"verdict": "benign", "expected": "ignore", "why": "Confirmación del endpoint de una acción de respuesta."},
+    "100929": {"verdict": "benign", "expected": "ignore", "why": "Confirmación del endpoint de una acción de respuesta."},
+    "100930": {"verdict": "benign", "expected": "ignore", "why": "Confirmación del endpoint de una acción de respuesta."},
+    "100900": {"verdict": "test", "expected": "review", "why": "Prueba de integración (TRIPLESOC_INTEGRATION_TEST): crítica a propósito para probar Teams; nunca debe disparar una contención."},
+    "100940": {"verdict": "positive", "expected": "review", "why": "Inyección de prompts: no hay acción de catálogo que la corte; debe ir a revisión y la IA NO debe decidir (motor +ai-guard)."},
+    "100941": {"verdict": "positive", "expected": "review", "why": "Inyección de prompts (Linux/syslog)."},
+    "100942": {"verdict": "positive", "expected": "review", "why": "Inyección de prompts (Windows)."},
+    "100943": {"verdict": "positive", "expected": "review", "why": "Inyección de prompts (raíz)."},
+    "60122": {"verdict": "benign", "expected": "ignore", "why": "Fallo de inicio de sesión aislado (contraseña mal escrita en el PC de pruebas); sin ráfaga ni origen externo."},
+    "60110": {"verdict": "benign", "expected": "ignore", "why": "Cambio de cuenta hecho por el administrador del equipo (nivel 8, incidente medio)."},
+    "61138": {"verdict": "benign", "expected": "ignore", "why": "Servicio nuevo creado por instalaciones de software conocidas (Dell, Microsoft). En otro contexto sería persistencia T1543: revisar si aparece fuera de horario o con binarios raros."},
+    "203": {"verdict": "benign", "expected": "ignore", "why": "Cola de eventos del agente llena (salud del agente), no es un ataque."},
+    "202": {"verdict": "benign", "expected": "ignore", "why": "Cola de eventos del agente al 90 %."},
+    "60602": {"verdict": "benign", "expected": "ignore", "why": "Error de una aplicación de Windows."}
+  },
+  "defaults": [
+    {"if_group": "sca", "verdict": "finding", "expected": "ignore", "why": "Hallazgo de configuración CIS: se corrige con hardening, no con una contención."},
+    {"if_group": "syscheck_registry", "verdict": "benign", "expected": "ignore", "why": "Cambios de registro de la actividad normal de Windows (actualizaciones y software instalado)."},
+    {"if_group": "syscheck", "verdict": "benign", "expected": "ignore", "why": "Cambios de integridad de archivos por actividad normal."},
+    {"if_level_lt": 7, "verdict": "benign", "expected": "ignore", "why": "Evento informativo de sistema o de seguridad de Windows sin indicio de ataque."},
+    {"if_level_lt": 12, "verdict": "benign", "expected": "ignore", "why": "Evento de nivel medio sin indicio de ataque en este entorno."}
+  ]
+}
