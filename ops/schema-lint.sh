@@ -10,7 +10,7 @@
 #   ./schema-lint.sh        desde cualquier carpeta del repositorio
 cd "$(dirname "$0")/.." || exit 2
 PAT="['\"](triplesoc-alerts-|wazuh-alerts-|wazuh-monitoring-|rule\.(level|id|groups|description|mitre)['\"]|agent\.(id|name|ip)['\"])"
-CONSUMERS=(triplesoc-responder/responder.py triplesoc-incidents/incidents.py triplesoc-rulesmith/rulesmith.py
+CONSUMERS=(triplesoc-bff/bff.py triplesoc-responder/responder.py triplesoc-incidents/incidents.py triplesoc-rulesmith/rulesmith.py
            triplesoc-dashboard/overlay/triplesoc-nav.js triplesoc-dashboard/overlay/triplesoc-incidents-ui.js
            triplesoc-dashboard/overlay/triplesoc-guardian-ui.js triplesoc-dashboard/overlay/triplesoc-assistant.js
            triplesoc-dashboard/overlay/triplesoc-rules-ui.js triplesoc-dashboard/saved-objects/triplesoc-overview.js)
