@@ -2,6 +2,8 @@
 FROM python:3.12-alpine
 RUN adduser -D -H -u 10001 tsoc && pip install --no-cache-dir anthropic
 COPY responder.py /app/responder.py
+# Capa traductora (contrato de índices y campos): build.sh la copia desde ../schema.
+COPY .schema/ /app/
 USER tsoc
 ENV PYTHONDONTWRITEBYTECODE=1
 HEALTHCHECK --interval=60s --timeout=5s --start-period=120s --retries=3 \

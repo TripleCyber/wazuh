@@ -7,6 +7,8 @@
    así cada cambio queda hecho con su identidad. Si la escritura no está permitida, la pantalla queda en solo lectura. */
 ;(function () {
   'use strict';
+  var TS = window.TSOC_SCHEMA; // capa traductora (triplesoc-schema.js): índice y campos de alertas
+  if (!TS) return;
   if (window.__tsocInc) return;
   window.__tsocInc = true;
 
@@ -154,10 +156,10 @@
   function st(s) { return '<span class="tsocInc__st tsocInc__st--' + esc(s) + '">' + esc(STATUS[s] || s) + '</span>'; }
   function discover(inc) {
     var ids = (inc.rules || []).map(function (r) { return r.id; }).join(' or ');
-    var q = 'agent.id:"' + inc.agent.id + '"' + (ids ? ' and rule.id:(' + ids + ')' : '');
+    var q = TS.f.agent_id + ':"' + inc.agent.id + '"' + (ids ? ' and ' + TS.f.rule_id + ':(' + ids + ')' : '');
     var from = new Date(Date.parse(inc.first_seen) - 60000).toISOString(), to = new Date(Date.parse(inc.last_seen) + 60000).toISOString();
-    return "/app/data-explorer/discover#?_a=(discover:(columns:!(agent.name,rule.description,rule.level),isDirty:!f,sort:!())," +
-      "metadata:(indexPattern:'triplesoc-alerts-*',view:discover))&_g=(filters:!(),refreshInterval:(pause:!t,value:0)," +
+    return "/app/data-explorer/discover#?_a=(discover:(columns:!(" + TS.columns.join(',') + "),isDirty:!f,sort:!())," +
+      "metadata:(indexPattern:'" + TS.idx.alerts + "',view:discover))&_g=(filters:!(),refreshInterval:(pause:!t,value:0)," +
       "time:(from:'" + from + "',to:'" + to + "'))&_q=(filters:!(),query:(language:kuery,query:'" + q.replace(/'/g, "!'") + "'))";
   }
 

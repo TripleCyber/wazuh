@@ -6,3 +6,4 @@
 *.log
 secret/
 triplesoc-manager/endpoints/agent-diagnostico.txt
+.schema/

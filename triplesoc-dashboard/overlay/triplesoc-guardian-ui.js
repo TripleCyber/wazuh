@@ -7,12 +7,14 @@
    quien actúa es el servicio, que además necesita MODE=approve en su configuración. */
 ;(function () {
   'use strict';
+  var TS = window.TSOC_SCHEMA; // capa traductora (triplesoc-schema.js): índice y campos de alertas
+  if (!TS) return;
   if (window.__tsocGuardian) return;
   window.__tsocGuardian = true;
 
   var ROUTE = /^\/app\/dashboards.*view\/triplesoc-guardian/;
   var IDX = { resp: 'triplesoc-incidents-responses', inc: 'triplesoc-incidents', set: 'triplesoc-incidents-guardian',
-    rules: 'triplesoc-incidents-rules', alerts: 'triplesoc-alerts-*' };
+    rules: 'triplesoc-incidents-rules', alerts: TS.idx.alerts };
   var S = { mode: null, changed: null, stories: [], k: null, state: 'watching', busy: false, loadedAt: 0, err: null, user: null, live: null, traces: [], pulse: null, peekAt: 0, liveKey: null, replay: null };
 
   function search(index, body) {
@@ -47,7 +49,7 @@
         { range: { severity_rank: { gte: 3 } } }, { range: { first_seen: { gte: 'now-7d' } } }] } } }),
       search(IDX.resp, { size: 200, _source: ['incident_id', 'status', 'story_outcome'], query: { range: { updated_at: { gte: 'now-8d' } } } }),
       search(IDX.rules, { size: 0, query: { bool: { filter: [{ term: { kind: 'rule' } }, { terms: { status: ['silent', 'active'] } }] } } }),
-      search(IDX.alerts, { size: 0, query: { range: { timestamp: { gte: 'now-24h' } } }, aggs: { a: { cardinality: { field: 'agent.id' } } } }),
+      search(IDX.alerts, { size: 0, query: { range: { timestamp: { gte: 'now-24h' } } }, aggs: { a: { cardinality: { field: TS.f.agent_id } } } }),
       search(IDX.resp, { size: 5, _source: ['incident_id', 'status', 'title', 'agent', 'action_label', 'undo_by'], query: { terms: { status: ['approved', 'executing', 'undo_requested', 'undoing'] } } })
     ]).then(function (r) {
       var set = r[0] && r[0].hits.hits[0] && r[0].hits.hits[0]._source;

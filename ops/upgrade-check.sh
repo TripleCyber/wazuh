@@ -121,7 +121,7 @@ sec "Dashboard y marca TripleSOC"
 code=$(docker exec "$DSH" curl -sk -o /dev/null -w '%{http_code}' --max-time 15 http://localhost:5601/app/login 2>/dev/null)
 [ "$code" = "200" ] && ok "dashboard responde (HTTP 200)" || fail "dashboard responde HTTP ${code:-nada}"
 J=/usr/share/wazuh-dashboard/src/core/target/public/core.entry.js
-for m in nav incidents rules guardian assistant; do
+for m in schema nav incidents rules guardian assistant; do
   n=$(docker exec "$DSH" grep -c "==== TripleSOC $m ====" "$J" 2>/dev/null)
   [ "${n:-0}" -eq 1 ] && ok "módulo TripleSOC $m en el bundle" || fail "módulo TripleSOC $m: ${n:-0} copias (esperada 1)"
 done
@@ -140,6 +140,26 @@ docker exec "triplesoc-responder-$SID" grep -q 'def prompt_injection' /app/respo
   && ok "Responder con guardarraíles de IA (inyección + techo de severidad)" || fail "Responder sin guardarraíles de IA"
 docker exec "triplesoc-webhook-receiver-$SID" wget -qO- http://127.0.0.1:8080/ >/dev/null 2>&1 \
   && ok "receptor de webhooks responde" || fail "receptor de webhooks no responde"
+
+# ------------------------------------------------------------------ 7b. capa traductora (fase 2)
+# Todos los consumidores leen índice y campos del mismo contrato (schema/triplesoc-schema.json).
+sec "Capa traductora (contrato de esquema)"
+SCHEMA_SRC=${SCHEMA_SRC:-$(cd "$(dirname "$0")/.." && pwd)/schema/triplesoc-schema.json}
+if [ -f "$SCHEMA_SRC" ]; then
+  want=$(md5sum < "$SCHEMA_SRC" | cut -c1-32)
+  for c in triplesoc-responder triplesoc-incidents triplesoc-rulesmith; do
+    got=$(docker exec "$c-$SID" md5sum /app/triplesoc-schema.json 2>/dev/null | cut -c1-32)
+    imp=$(docker exec "$c-$SID" python -c 'import sys; sys.path.insert(0, "/app"); import tsoc_schema as T; print(T.ADAPTER)' 2>/dev/null | tr -d '\r')
+    if [ "$got" = "$want" ] && [ -n "$imp" ]; then ok "$c usa el contrato del repositorio (adaptador $imp)"
+    elif [ -z "$got" ]; then fail "$c no tiene la capa traductora (/app/triplesoc-schema.json)"
+    else fail "$c tiene otro contrato (md5 ${got:0:8} ≠ ${want:0:8}) o no carga tsoc_schema"; fi
+  done
+  ct=$(grep -o '"contract": *"[^"]*"' "$SCHEMA_SRC" | cut -d'"' -f4)
+  docker exec "$DSH" grep -q "\"contract\": *\"$ct\"" "$J" 2>/dev/null \
+    && ok "dashboard con el contrato $ct incrustado" || fail "el bundle del dashboard no lleva el contrato $ct"
+else
+  warn "no encuentro $SCHEMA_SRC (ejecutar desde /opt/triplesoc/src/ops o pasar SCHEMA_SRC=)"
+fi
 
 # ------------------------------------------------------------------ resultado
 echo

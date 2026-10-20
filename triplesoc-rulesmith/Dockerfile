@@ -2,6 +2,8 @@
 FROM python:3.12-alpine
 RUN adduser -D -H -u 10001 tsoc
 COPY rulesmith.py /app/rulesmith.py
+# Capa traductora (contrato de índices y campos): build.sh la copia desde ../schema.
+COPY .schema/ /app/
 RUN python -m py_compile /app/rulesmith.py
 USER tsoc
 ENV PYTHONDONTWRITEBYTECODE=1

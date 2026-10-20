@@ -10,6 +10,7 @@ SRC=${1:?SRC}
 OUT=${2:?OUT}
 BRAND=${BRAND_DIR:-/brand}
 OVERLAY=${OVERLAY_DIR:-/overlay}
+SCHEMA_JSON=${SCHEMA_JSON:-/schema/triplesoc-schema.json}
 WORK=$(mktemp -d)
 
 set -a; . "$BRAND/brand.env"; set +a
@@ -132,6 +133,18 @@ install -D -m 0644 "$SRC/$CORE_JS" "$OUT/$CORE_JS"
   || fail "no se encontró (o no es único) el estado por defecto del menú en $CORE_JS"
 sed -i 's/getItem(IS_LOCKED_KEY)==="true"/getItem(IS_LOCKED_KEY)!=="false"/' "$OUT/$CORE_JS"
 grep -q 'getItem(IS_LOCKED_KEY)!=="false"' "$OUT/$CORE_JS" || fail "no se pudo anclar el menú por defecto"
+
+# ---------------------------------------------------------------- 4b'. capa traductora (esquema)
+# Va ANTES que las demás pantallas: define window.TSOC_SCHEMA (índice de alertas, campos y bandas de
+# severidad) a partir del contrato schema/triplesoc-schema.json, el mismo que usan los servicios Python.
+log "Capa traductora (contrato $(grep -o '"contract": *"[^"]*"' "$SCHEMA_JSON" | cut -d'"' -f4), adaptador $(grep -o '"adapter": *"[^"]*"' "$SCHEMA_JSON" | cut -d'"' -f4))"
+SCH_JS=$OVERLAY/triplesoc-schema.js
+[[ -f "$SCH_JS" && -f "$SCHEMA_JSON" ]] || fail "no existe $SCH_JS o $SCHEMA_JSON"
+[[ $(grep -c '/\*__TSOC_SCHEMA_JSON__\*/null' "$SCH_JS") -eq 1 ]] || fail "marcador del esquema no encontrado en $SCH_JS"
+printf '\n' >> "$OUT/$CORE_JS"
+SCHEMA_JSON="$SCHEMA_JSON" perl -0pe 'BEGIN { local $/; open my $f, "<", $ENV{SCHEMA_JSON} or die; $j = <$f>; $j =~ s/\s+\z//; } s{/\*__TSOC_SCHEMA_JSON__\*/null}{$j}' "$SCH_JS" >> "$OUT/$CORE_JS"
+[[ $(grep -c '==== TripleSOC schema ====' "$OUT/$CORE_JS") -eq 1 ]] || fail "capa traductora no añadida a $CORE_JS"
+grep -q '"contract": *"triplesoc.schema/' "$OUT/$CORE_JS" || fail "el contrato no quedó incrustado en $CORE_JS"
 
 # ---------------------------------------------------------------- 4c. entradas propias del menú
 # Se AÑADE al final del bundle (no modifica código existente). El script solo usa el DOM del menú

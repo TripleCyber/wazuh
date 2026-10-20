@@ -9,6 +9,8 @@
    apply-branding.sh lo AÑADE al final de core.entry.js: no modifica código existente. Nunca rompe la página. */
 ;(function () {
   'use strict';
+  var TS = window.TSOC_SCHEMA; // capa traductora (triplesoc-schema.js): índice y campos de alertas
+  if (!TS) return;
   if (window.__tsocAssistant) return;
   window.__tsocAssistant = true;
 
@@ -115,9 +117,9 @@
       });
     });
     // Vulnerabilidades críticas que el detector acaba de anunciar (activa = riesgo; resuelta = ya corregida en el equipo).
-    search('triplesoc-alerts-*', { size: 1, sort: [{ timestamp: 'desc' }],
-      _source: ['timestamp', 'agent.name', 'data.vulnerability.cve', 'data.vulnerability.status', 'data.vulnerability.package.name'],
-      query: { bool: { filter: [{ term: { 'rule.groups': 'vulnerability-detector' } }, { term: { 'data.vulnerability.severity': 'Critical' } },
+    search(TS.idx.alerts, { size: 1, sort: [{ timestamp: 'desc' }],
+      _source: ['timestamp', TS.f.agent_name, 'data.vulnerability.cve', 'data.vulnerability.status', 'data.vulnerability.package.name'],
+      query: { bool: { filter: [TS.term('rule_groups', 'vulnerability-detector'), { term: { 'data.vulnerability.severity': 'Critical' } },
         { range: { timestamp: { gte: 'now-15m' } } }] } } }).then(function (r) {
       var h = r && r.hits.hits[0] && r.hits.hits[0]._source, v = h && h.data && h.data.vulnerability;
       A.vuln = v ? { at: h.timestamp, host: (h.agent && h.agent.name) || '', cve: v.cve || '', pkg: (v.package && v.package.name) || '',
@@ -428,10 +430,10 @@
         syncState(); paintIsland();
       });
       // La alerta crítica del agente (nivel 12 o más) pone la isla en rojo en el momento, sin esperar al incidente.
-      search('triplesoc-alerts-*', { size: 1, sort: [{ timestamp: 'desc' }], _source: ['timestamp', 'agent.name', 'rule.description', 'rule.level'],
-        query: { bool: { filter: [{ range: { 'rule.level': { gte: 12 } } }, { range: { timestamp: { gte: 'now-3m' } } }] } } }).then(function (r) {
+      search(TS.idx.alerts, { size: 1, sort: [{ timestamp: 'desc' }], _source: TS.src('timestamp', 'agent_name', 'rule_description', 'severity'),
+        query: { bool: { filter: [TS.sevGte(TS.CRITICAL), { range: { timestamp: { gte: 'now-3m' } } }] } } }).then(function (r) {
         if (!r) return;
-        var h = r.hits.hits[0] && r.hits.hits[0]._source;
+        var h = r.hits.hits[0] && TS.normalize(r.hits.hits[0]._source);
         var was = LV.alert && LV.alert.at;
         LV.alert = h ? { at: h.timestamp, host: (h.agent && h.agent.name) || 'un equipo',
           what: String((h.rule && h.rule.description) || 'alerta crítica').replace(/^TripleSOC Security:\s*/, '') } : null;

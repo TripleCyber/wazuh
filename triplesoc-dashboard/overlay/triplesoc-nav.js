@@ -9,10 +9,14 @@
   if (window.__tsocNav) return;
   window.__tsocNav = true;
 
-  var INDEX = 'triplesoc-alerts-*';
+  var TS = window.TSOC_SCHEMA; // capa traductora (triplesoc-schema.js): índice y campos de alertas
+  if (!TS) return;
+  var INDEX = TS.idx.alerts;
+  // Reconoce en la URL la consulta DQL q (así se marca la entrada activa del menú).
+  function qre(q) { return new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + "'"); }
   // Lista de alertas (Discover) de las últimas 24 h con una consulta DQL.
   function alerts(q) {
-    return "/app/data-explorer/discover#?_a=(discover:(columns:!(agent.name,rule.description,rule.level),isDirty:!f,sort:!())," +
+    return "/app/data-explorer/discover#?_a=(discover:(columns:!(" + TS.columns.join(',') + "),isDirty:!f,sort:!())," +
       "metadata:(indexPattern:'" + INDEX + "',view:discover))&_g=(filters:!(),refreshInterval:(pause:!t,value:0),time:(from:now-24h,to:now))" +
       "&_q=(filters:!(),query:(language:kuery,query:'" + q + "'))";
   }
@@ -35,7 +39,7 @@
     { label: 'Overview', icon: 'grid', tone: 'blue', does: 'Resumen: alertas, gravedad y equipos', href: '/app/dashboards#/view/triplesoc-overview', match: /^\/app\/dashboards.*view\/triplesoc-overview/ },
     { group: 'Investigar' },
     { label: 'Incidents', icon: 'siren', tone: 'red', does: 'Ataques agrupados y qué hacer con cada uno', href: '/app/dashboards#/view/triplesoc-incidents', match: /^\/app\/dashboards.*view\/triplesoc-incidents/, badge: 'incidents' },
-    { label: 'Alerts', icon: 'bell', tone: 'amber', does: 'Alertas graves de las últimas 24 h', href: alerts('rule.level >= 12'), match: /rule\.level >= 12'/, badge: 'alerts' },
+    { label: 'Alerts', icon: 'bell', tone: 'amber', does: 'Alertas graves de las últimas 24 h', href: alerts(TS.kql.critical), match: qre(TS.kql.critical), badge: 'alerts' },
     { label: 'Analytics', icon: 'chart', tone: 'cyan', does: 'Buscar y revisar cada evento', href: '/app/threat-hunting', match: /^\/app\/threat-hunting/ },
     { label: 'Attack Map', icon: 'globe', tone: 'violet', does: 'Técnicas de ataque vistas (MITRE)', href: '/app/mitre-attack', match: /^\/app\/mitre-attack/ },
     { group: 'Configurar' },
@@ -45,9 +49,9 @@
     { label: 'APIs', icon: 'code', tone: 'slate', does: 'Conexión técnica con el servidor', href: '/app/server-apis', match: /^\/app\/server-apis/ }
   ];
   var ZONES = [
-    { label: 'Anonymous', dot: 'red', href: alerts('rule.level >= 12'), match: null },
-    { label: 'Verified', dot: 'blue', href: alerts('rule.level >= 7 and rule.level < 12'), match: /rule\.level >= 7 and rule\.level < 12'/ },
-    { label: 'Secure', dot: 'green', href: alerts('rule.level < 7'), match: /rule\.level < 7'/ }
+    { label: 'Anonymous', dot: 'red', href: alerts(TS.kql.critical), match: null },
+    { label: 'Verified', dot: 'blue', href: alerts(TS.kql.high), match: qre(TS.kql.high) },
+    { label: 'Secure', dot: 'green', href: alerts(TS.kql.low), match: qre(TS.kql.low) }
   ];
 
   function el(tag, cls, html) { var e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; }
@@ -120,7 +124,7 @@
   // Contadores (misma vía de búsqueda que usa el dashboard, con los permisos del usuario):
   //   Alerts = alertas de nivel >= 12 en las últimas 24 h; Incidents = incidentes en estado "new".
   var BADGES = {
-    alerts: { index: INDEX, query: { bool: { filter: [{ range: { timestamp: { gte: 'now-24h' } } }, { range: { 'rule.level': { gte: 12 } } }] } } },
+    alerts: { index: INDEX, query: { bool: { filter: [{ range: { timestamp: { gte: 'now-24h' } } }, TS.sevGte(TS.CRITICAL)] } } },
     incidents: { index: 'triplesoc-incidents', query: { term: { status: 'new' } } },
     // AI Rules = reglas redactadas por la IA pendientes de revisión.
     rules: { index: 'triplesoc-incidents-rules', query: { term: { status: 'proposed' } } }

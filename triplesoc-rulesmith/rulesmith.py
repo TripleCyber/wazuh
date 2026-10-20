@@ -38,11 +38,13 @@ import urllib.request
 from datetime import datetime, timedelta, timezone
 from xml.sax.saxutils import escape, quoteattr
 
+import tsoc_schema as TS  # capa traductora: índice de alertas y campos de Wazuh
+
 INDEXER_URL = os.environ.get("INDEXER_URL", "https://wazuh-indexer:9200").rstrip("/")
 INDEXER_USER = os.environ.get("INDEXER_USER", "triplesoc_incidents")
 PASSWORD_FILE = os.environ.get("INDEXER_PASSWORD_FILE", "/run/triplesoc/indexer_password")
 CA_FILE = os.environ.get("CA_FILE", "/certs/root-ca.pem")
-ALERTS_INDEX = os.environ.get("ALERTS_INDEX", "triplesoc-alerts-*")
+ALERTS_INDEX = TS.ALERTS_INDEX
 # Mismo prefijo que los incidentes: lo cubre el rol del indexer que ya existe (triplesoc-incidents*).
 RULES_INDEX = os.environ.get("RULES_INDEX", "triplesoc-incidents-rules")
 MODE = os.environ.get("MODE", "propose")
@@ -492,9 +494,8 @@ def check_parents(spec):
 def estimate_noise(spec):
     """Estimación con el histórico: cuántas alertas del padre (y con los textos 'match') hubo en 30 días.
     Es una cota: si el padre es de nivel 0 no deja alertas y no se puede estimar."""
-    filt = [{"range": {"timestamp": {"gte": "now-30d"}}}]
-    filt.append({"terms": {"rule.id": [str(x) for x in spec["parent_sids"]]}} if spec["parent_sids"]
-                else {"term": {"rule.groups": spec["parent_group"]}})
+    filt = [{"range": {TS.F["timestamp"]: {"gte": "now-30d"}}}]
+    filt.append(TS.by_rule_ids(spec["parent_sids"]) if spec["parent_sids"] else TS.by_rule_group(spec["parent_group"]))
     parent = (req("POST", f"/{ALERTS_INDEX}/_count", {"query": {"bool": {"filter": filt}}}, ok404=True) or {}).get("count", 0)
     plain = [c["value"].strip("^$") for c in spec["conditions"]
              if c["kind"] == "match" and not c["negate"] and "|" not in c["value"]]
@@ -686,8 +687,8 @@ def refresh_hits():
     if not live:
         return
     res = req("POST", f"/{ALERTS_INDEX}/_search", {"size": 0, "query": {"bool": {"filter": [
-        {"range": {"timestamp": {"gte": "now-7d"}}}, {"terms": {"rule.id": [str(d["rule_id"]) for d in live]}}]}},
-        "aggs": {"r": {"terms": {"field": "rule.id", "size": 1000}}}}, ok404=True)
+        {"range": {TS.F["timestamp"]: {"gte": "now-7d"}}}, TS.by_rule_ids(d["rule_id"] for d in live)]}},
+        "aggs": {"r": {"terms": {"field": TS.F["rule_id"], "size": 1000}}}}, ok404=True)
     counts = {b["key"]: b["doc_count"] for b in (res or {}).get("aggregations", {}).get("r", {}).get("buckets", [])}
     for d in live:
         n = counts.get(str(d["rule_id"]), 0)

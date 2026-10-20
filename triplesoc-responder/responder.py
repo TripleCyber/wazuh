@@ -29,11 +29,13 @@ import urllib.error
 import urllib.request
 from datetime import datetime, timezone
 
+import tsoc_schema as TS  # capa traductora: índice de alertas y campos de Wazuh
+
 INDEXER_URL = os.environ.get("INDEXER_URL", "https://wazuh-indexer:9200").rstrip("/")
 INDEXER_USER = os.environ.get("INDEXER_USER", "triplesoc_incidents")
 PASSWORD_FILE = os.environ.get("INDEXER_PASSWORD_FILE", "/run/triplesoc/indexer_password")
 CA_FILE = os.environ.get("CA_FILE", "/certs/root-ca.pem")
-ALERTS_INDEX = os.environ.get("ALERTS_INDEX", "triplesoc-alerts-*")
+ALERTS_INDEX = TS.ALERTS_INDEX
 INCIDENTS_INDEX = os.environ.get("INCIDENTS_INDEX", "triplesoc-incidents")
 # Mismo prefijo que los incidentes: lo cubre el rol del indexer que ya existe (triplesoc-incidents*).
 RESPONSES_INDEX = os.environ.get("RESPONSES_INDEX", "triplesoc-incidents-responses")
@@ -250,7 +252,7 @@ def source_ip(inc):
     if not ids:
         return None
     res = req("POST", f"/{ALERTS_INDEX}/_search", {
-        "size": len(ids), "_source": ["data.srcip"], "query": {"terms": {"id": ids}}}, ok404=True)
+        "size": len(ids), "_source": ["data.srcip"], "query": {"terms": {TS.F["alert_id"]: ids}}}, ok404=True)
     counts = {}
     for h in (res or {}).get("hits", {}).get("hits", []):
         ip = (h["_source"].get("data") or {}).get("srcip")
@@ -398,7 +400,7 @@ def usb_already_blocked(agent_id):
     res = req("POST", f"/{RESPONSES_INDEX}/_search", {
         "size": 1, "sort": [{"updated_at": "desc"}], "_source": ["status"],
         "query": {"bool": {"filter": [
-            {"term": {"agent.id": str(agent_id)}}, {"term": {"action": "block_usb_storage"}},
+            {"term": {"agent.id": str(agent_id)}}, {"term": {"action": "block_usb_storage"}},  # índice propio TripleSOC
             {"terms": {"status": ["executing", "executed", "undo_requested", "undoing", "undone", "undo_failed"]}}]}}},
         ok404=True)
     hits = (res or {}).get("hits", {}).get("hits", [])
@@ -414,7 +416,7 @@ def phone_waiting(agent_id):
     res = req("POST", f"/{GUARDIAN_INDEX}/_search", {
         "size": 1, "sort": [{"at": "desc"}], "_source": ["status"],
         "query": {"bool": {"filter": [
-            {"term": {"kind": "trace"}}, {"match": {"agent.id": str(agent_id)}},
+            {"term": {"kind": "trace"}}, {"match": {"agent.id": str(agent_id)}},  # índice propio TripleSOC
             {"match": {"action": "block_usb_phone"}}, {"range": {"at": {"gte": "now-5m"}}}]}}}, ok404=True)
     hits = (res or {}).get("hits", {}).get("hits", [])
     return bool(hits) and hits[0]["_source"].get("status") in ("waiting", "failed")
@@ -427,7 +429,7 @@ def input_device_seen(agent_id):
     res = req("POST", f"/{GUARDIAN_INDEX}/_search", {
         "size": 1, "_source": ["status"],
         "query": {"bool": {"filter": [
-            {"term": {"kind": "trace"}}, {"match": {"agent.id": str(agent_id)}},
+            {"term": {"kind": "trace"}}, {"match": {"agent.id": str(agent_id)}},  # índice propio TripleSOC
             {"match": {"device.kind": "input"}}, {"range": {"at": {"gte": "now-5m"}}}]}}}, ok404=True)
     return bool((res or {}).get("hits", {}).get("hits", []))
 
@@ -440,8 +442,8 @@ def input_device_alert(inc):
     if not ids:
         return False
     res = req("POST", f"/{ALERTS_INDEX}/_search", {
-        "size": 1, "sort": [{"timestamp": "desc"}], "_source": ["data.usb.device"],
-        "query": {"terms": {"id": ids}}}, ok404=True)
+        "size": 1, "sort": [{TS.F["timestamp"]: "desc"}], "_source": ["data.usb.device"],
+        "query": {"terms": {TS.F["alert_id"]: ids}}}, ok404=True)
     hits = (res or {}).get("hits", {}).get("hits", [])
     usb = ((hits[0]["_source"].get("data") or {}).get("usb") or {}) if hits else {}
     return bool(re.search(r"dispositivo de entrada usb|usb input device", str(usb.get("device") or ""), re.I))
@@ -979,10 +981,10 @@ open_incidents, open_ai_rules, open_guardian, open_overview, open_threat_hunting
 def guardian_facts():
     """Resumen real del estado para el asistente (24 h, 7 días)."""
     f = {"mode": "automático" if guardian_mode() == "auto" else "manual con aprobación", "server_time": now_iso()}
-    al = req("POST", f"/{ALERTS_INDEX}/_search", {"size": 0, "query": {"range": {"timestamp": {"gte": "now-24h"}}},
-             "aggs": {"crit": {"filter": {"range": {"rule.level": {"gte": 12}}}},
-                      "agents": {"cardinality": {"field": "agent.id"}},
-                      "top": {"terms": {"field": "rule.description", "size": 4}}}}, ok404=True) or {}
+    al = req("POST", f"/{ALERTS_INDEX}/_search", {"size": 0, "query": {"range": {TS.F["timestamp"]: {"gte": "now-24h"}}},
+             "aggs": {"crit": {"filter": TS.sev_gte(TS.CRITICAL)},
+                      "agents": {"cardinality": {"field": TS.F["agent_id"]}},
+                      "top": {"terms": {"field": TS.F["rule_description"], "size": 4}}}}, ok404=True) or {}
     a = al.get("aggregations") or {}
     f["alerts_24h"] = (al.get("hits") or {}).get("total", {}).get("value")
     f["critical_alerts_24h"] = (a.get("crit") or {}).get("doc_count")
@@ -1371,7 +1373,7 @@ def adopt_reflex(inc):
     incidente (misma acción, mismo historial, mismo Deshacer) en vez de recomendar otra."""
     agent_id = str((inc.get("agent") or {}).get("id") or "")
     res = req("POST", f"/{RESPONSES_INDEX}/_search", {"size": 1, "sort": [{"created_at": "desc"}], "query": {"bool": {"filter": [
-        {"term": {"reflex": True}}, {"term": {"agent.id": agent_id}}, {"term": {"category": str(inc.get("category"))}},
+        {"term": {"reflex": True}}, {"term": {"agent.id": agent_id}}, {"term": {"category": str(inc.get("category"))}},  # índice propio TripleSOC
         {"prefix": {"incident_id": "RFX-"}}, {"range": {"created_at": {"gte": "now-10m"}}}]}}}, ok404=True)
     hits = (res or {}).get("hits", {}).get("hits", [])
     if not hits:
@@ -1409,12 +1411,11 @@ def reflex_line(line, seen_at):
             if at:
                 _rx["last_at"], _rx["lag_ms"] = at.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z", max(0, _ms(at, seen_at))
         # Para la pestaña "En vivo": qué alerta se evaluó y que no pedía una respuesta inmediata.
-        r = re.search(r'"rule":\{"level":(\d+),"description":"((?:[^"\\]|\\.)*)","id":"(\d+)"', line)
-        a = re.search(r'"agent":\{"id":"\d+","name":"([^"]*)"', line)
+        r, a = TS.raw_rule(line), TS.raw_agent_name(line)
         if r:
-            feed("alert", f"regla {r.group(3)} nivel {r.group(1)} en {a.group(1) if a else 'n/d'} · "
-                          f"{VENDOR_TRACE.sub('TripleSOC', r.group(2))[:90]} → evaluada, sin respuesta inmediata",
-                 key=f"{r.group(3)}|{a.group(1) if a else ''}")
+            feed("alert", f"regla {r[2]} nivel {r[0]} en {a or 'n/d'} · "
+                          f"{VENDOR_TRACE.sub('TripleSOC', r[1])[:90]} → evaluada, sin respuesta inmediata",
+                 key=f"{r[2]}|{a or ''}")
         return
     alert = json.loads(line)
     rule_id = str((alert.get("rule") or {}).get("id"))

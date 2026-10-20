@@ -4,17 +4,22 @@
 // Definiciones (provisionales, ajustables aquí):
 //   Zonas: Anonymous = nivel >= 12, Verified = 7-11, Secure = 0-6.
 //   Eventos: Threat = nivel >= 12; Audit = auditoría/integridad/autenticación (< 12); Endpoint = resto de agentes.
+// Índice, campos y bandas salen de la capa traductora del dashboard (window.TSOC_SCHEMA): si cambian,
+// basta con volver a pegar este archivo para regenerar el tablero.
 (async () => {
-  const ALERTS = 'triplesoc-alerts-*';
-  const MONITORING = 'wazuh-monitoring-*';
+  const TS = window.TSOC_SCHEMA;
+  if (!TS) throw new Error('Falta la capa traductora TripleSOC (window.TSOC_SCHEMA): ¿dashboard sin la imagen TripleSOC?');
+  const ALERTS = TS.idx.alerts;
+  const MONITORING = TS.idx.monitoring;
   const C = { red: '#BB2227', green: '#1AA54A', blue: '#3B82F6', purple: '#8B5CF6', amber: '#D97706', gray: '#6B7280' };
+  const AUDIT = `${TS.f.rule_groups}:(syscheck or policy_changed or account_changed or audit or authentication_success or authentication_failed or authentication_failures)`;
   const Q = {
-    anonymous: 'rule.level >= 12',
-    verified: 'rule.level >= 7 and rule.level < 12',
-    secure: 'rule.level < 7',
-    threat: 'rule.level >= 12',
-    audit: 'rule.level < 12 and rule.groups:(syscheck or policy_changed or account_changed or audit or authentication_success or authentication_failed or authentication_failures)',
-    endpoint: 'rule.level < 12 and not agent.id:"000" and not rule.groups:(syscheck or policy_changed or account_changed or audit or authentication_success or authentication_failed or authentication_failures)',
+    anonymous: TS.kql.critical,
+    verified: TS.kql.high,
+    secure: TS.kql.low,
+    threat: TS.kql.critical,
+    audit: `${TS.kql.below(TS.CRITICAL)} and ${AUDIT}`,
+    endpoint: `${TS.kql.below(TS.CRITICAL)} and not ${TS.f.agent_id}:"000" and not ${AUDIT}`,
   };
   const kq = (query) => ({ query, language: 'kuery' });
   let n = 0; const uid = () => `tsoc-${++n}`;
@@ -32,7 +37,7 @@
     attributes: {
       title, description: '', version: 1, uiStateJSON: '{}',
       visState: JSON.stringify({ title, type: 'metrics', aggs: [], params: {
-        id: uid(), index_pattern: ALERTS, time_field: 'timestamp', interval: '', axis_position: 'left',
+        id: uid(), index_pattern: ALERTS, time_field: TS.f.timestamp, interval: '', axis_position: 'left',
         axis_formatter: 'number', axis_scale: 'normal', show_legend: 1, show_grid: 1, tooltip_mode: 'show_all',
         drop_last_bucket: 0, isModelInvalid: false, filter: kq(''), background_color_rules: [], ...params } }),
       kibanaSavedObjectMeta: { searchSourceJSON: '{}' },
@@ -102,9 +107,9 @@
         title: 'Filters', description: '', version: 1, uiStateJSON: '{}',
         visState: JSON.stringify({ title: 'Filters', type: 'input_control_vis', aggs: [], params: {
           controls: [
-            { id: '1', fieldName: 'rule.level', label: 'Severity (level)', type: 'range', parent: '',
+            { id: '1', fieldName: TS.f.severity, label: 'Severity (level)', type: 'range', parent: '',
               options: { decimalPlaces: 0, step: 1 }, indexPatternRefName: 'control_0_index_pattern' },
-            { id: '2', fieldName: 'agent.name', label: 'Agent', type: 'list', parent: '',
+            { id: '2', fieldName: TS.f.agent_name, label: 'Agent', type: 'list', parent: '',
               options: { type: 'terms', multiselect: true, dynamicOptions: true, size: 10, order: 'desc' },
               indexPatternRefName: 'control_1_index_pattern' },
           ],

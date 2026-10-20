@@ -23,11 +23,13 @@ import urllib.error
 import urllib.request
 from datetime import datetime, timedelta, timezone
 
+import tsoc_schema as TS  # capa traductora: índice de alertas y campos de Wazuh
+
 INDEXER_URL = os.environ.get("INDEXER_URL", "https://wazuh-indexer:9200").rstrip("/")
 INDEXER_USER = os.environ.get("INDEXER_USER", "triplesoc_incidents")
 PASSWORD_FILE = os.environ.get("INDEXER_PASSWORD_FILE", "/run/triplesoc/indexer_password")
 CA_FILE = os.environ.get("CA_FILE", "/certs/root-ca.pem")
-ALERTS_INDEX = os.environ.get("ALERTS_INDEX", "triplesoc-alerts-*")
+ALERTS_INDEX = TS.ALERTS_INDEX
 INCIDENTS_INDEX = os.environ.get("INCIDENTS_INDEX", "triplesoc-incidents")
 STATE_INDEX = os.environ.get("STATE_INDEX", "triplesoc-incidents-state")
 MIN_LEVEL = int(os.environ.get("MIN_LEVEL", "5"))
@@ -223,7 +225,7 @@ def new_incident(alert, ts, cat_key, cat_title):
 
 def merge(inc, alert, ts):
     rule = alert.get("rule", {})
-    lvl = int(rule.get("level", 0))
+    lvl = TS.severity(alert)
     inc["alert_count"] += 1
     inc["max_level"] = max(inc["max_level"], lvl)
     inc["last_seen"] = iso(max(ts, parse_ts(inc["last_seen"])))
@@ -256,11 +258,11 @@ def merge(inc, alert, ts):
 def fetch_alerts(cursor, until_ms):
     since = cursor[0] if cursor else int((time.time() - BACKFILL_HOURS * 3600) * 1000)
     body = {
-        "size": BATCH, "sort": [{"timestamp": "asc"}, {"id": "asc"}],
-        "_source": ["id", "timestamp", "agent", "rule.id", "rule.level", "rule.description", "rule.groups", "rule.mitre"],
+        "size": BATCH, "sort": [{TS.F["timestamp"]: "asc"}, {TS.F["alert_id"]: "asc"}],
+        "_source": TS.source("alert_id", "timestamp", "agent", "rule_id", "severity", "rule_description", "rule_groups", "rule_mitre"),
         "query": {"bool": {"filter": [
-            {"range": {"rule.level": {"gte": MIN_LEVEL}}},
-            {"range": {"timestamp": {"gte": since, "lte": until_ms, "format": "epoch_millis"}}},
+            TS.sev_gte(MIN_LEVEL),
+            {"range": {TS.F["timestamp"]: {"gte": since, "lte": until_ms, "format": "epoch_millis"}}},
         ]}},
     }
     if cursor:
@@ -307,7 +309,7 @@ def cycle(state):
         if not hits:
             break
         for h in hits:
-            a = h["_source"]
+            a = TS.normalize(h["_source"])
             ts = parse_ts(a["timestamp"])
             cat_key, cat_title = categorize(a.get("rule", {}).get("groups"))
             key = (a.get("agent", {}).get("id"), cat_key)

@@ -8,6 +8,9 @@ cd "$(dirname "$0")"
 WAZUH_VERSION=${1:-${WAZUH_VERSION:-4.14.7}}
 IMAGE=${IMAGE:-triplesoc/wazuh-dashboard}
 
+# Capa traductora: el contrato vive en ../schema y se copia al contexto en cada build.
+rm -rf .schema && mkdir .schema && cp ../schema/triplesoc-schema.json .schema/
+
 docker build \
   --build-arg WAZUH_VERSION="$WAZUH_VERSION" \
   -t "$IMAGE:$WAZUH_VERSION" \

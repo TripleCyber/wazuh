@@ -15,6 +15,8 @@ RUN apk add --no-cache bash coreutils findutils grep sed perl gettext rsvg-conve
 COPY --from=base /usr/share/wazuh-dashboard /src
 COPY brand/ /brand/
 COPY overlay/ /overlay/
+# Contrato de la capa traductora: build.sh lo copia desde ../schema (el contexto no puede salir de aquí).
+COPY .schema/triplesoc-schema.json /schema/triplesoc-schema.json
 COPY scripts/apply-branding.sh /usr/local/bin/apply-branding.sh
 RUN bash /usr/local/bin/apply-branding.sh /src /out
 
