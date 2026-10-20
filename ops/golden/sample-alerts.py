@@ -13,6 +13,8 @@ sys.path.insert(0, "/app")
 import responder as R
 import tsoc_schema as TS
 
+R.AUTH = R._auth()  # main() lo hace al arrancar el servicio; aquí no se llama a main()
+
 PER_RULE = int(os.environ.get("PER_RULE", "20"))
 SEED = int(os.environ.get("SEED", "20261020"))
 F = TS.F
