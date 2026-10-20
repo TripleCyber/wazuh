@@ -344,13 +344,13 @@ def _ask_compatible(key, question):
 # IA, o el incidente contiene las reglas 10094x que lo detectan en el manager, la IA no se consulta.
 PROMPT_INJECTION_RULES = {"100940", "100941", "100942", "100943"}
 PROMPT_INJECTION_RE = re.compile(
-    r"(ignore|disregard|forget|override)\W+(all\W+|any\W+|the\W+|your\W+)*(previous|prior|above|earlier|system)\W+"
+    r"(ignore|disregard|forget|override)[\W_]+(all[\W_]+|any[\W_]+|the[\W_]+|your[\W_]+)*(previous|prior|above|earlier|system)[\W_]+"
     r"(instructions|rules|prompts?|directives)"
-    r"|ignor[ae]\w*\W+(todas\W+)?(las\W+)?(instrucciones|reglas)\W+(anteriores|previas)"
-    r"|(mark|classify|flag|label|treat)\W+(this|it|the\W+alert)\W+as\W+(a\W+)?(false\W+positive|benign|harmless|safe)"
-    r"|m[aá]rca(lo|la|r)\W+como\W+(un\W+)?(falso\W+positivo|benign[oa]|inofensiv[oa]|segur[oa])"
-    r"|(reveal|print|show)\W+(your\W+|the\W+)?system\W+prompt|you\W+are\W+now\W+(an?|the|in)\W"
-    r"|new\W+instructions\W*:|nuevas\W+instrucciones\W*:", re.I)
+    r"|ignor[ae]\w*[\W_]+(todas[\W_]+)?(las[\W_]+)?(instrucciones|reglas)[\W_]+(anteriores|previas)"
+    r"|(mark|classify|flag|label|treat)[\W_]+(this|it|the[\W_]+alert)[\W_]+as[\W_]+(a[\W_]+)?(false[\W_]+positive|benign|harmless|safe)"
+    r"|m[aá]rca(lo|la|r)[\W_]+como[\W_]+(un[\W_]+)?(falso[\W_]+positivo|benign[oa]|inofensiv[oa]|segur[oa])"
+    r"|(reveal|print|show)[\W_]+(your[\W_]+|the[\W_]+)?system[\W_]+prompt|you[\W_]+are[\W_]+now[\W_]+(an?|the|in)[\W_]"
+    r"|new[\W_]+instructions[\W_]*:|nuevas[\W_]+instrucciones[\W_]*:", re.I)
 
 
 def prompt_injection(inc):
