@@ -222,6 +222,12 @@ body.euiBody--hasFlyout[style*="padding-left: 320px"] { padding-left: 248px !imp
 .tsocNav__who { display: flex; flex-direction: column; min-width: 0; }
 .tsocNav__who b { font: 600 13px/1.3 var(--tsoc-font); color: #fff; }
 .tsocNav__who small { font: 400 12px/1.3 var(--tsoc-font); color: var(--tsoc-muted); }
+.tsocNav__logout {
+  margin-left: auto; flex: 0 0 32px; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid var(--tsoc-border); border-radius: 8px; background: transparent; color: var(--tsoc-muted); cursor: pointer;
+}
+.tsocNav__logout:hover, .tsocNav__logout:focus-visible { color: #fff; background: rgba(239, 68, 68, .18); border-color: rgba(239, 68, 68, .5); outline: none; }
+.tsocNav__logout:disabled { opacity: .5; cursor: wait; }
 
 /* ---------- Pantalla "Incidents" (overlay/triplesoc-incidents-ui.js) ---------- */
 .tsocInc { position: fixed; right: 0; bottom: 0; z-index: 990; display: flex; overflow: hidden; background: #141414; color: #E5E5E5; font: 400 14px/1.4 var(--tsoc-font); }

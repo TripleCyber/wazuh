@@ -104,11 +104,27 @@
     return root;
   }
 
+  // Cerrar sesión: lo mismo que el "Log out" del plugin de seguridad (POST /auth/logout borra la cookie de
+  // sesión; luego se limpia la sesión del navegador y se vuelve al login). Si la petición falla, igualmente al login.
+  function logout(ev) {
+    var b = ev.currentTarget; b.disabled = true;
+    fetch('/auth/logout', { method: 'POST', credentials: 'same-origin', headers: { 'osd-xsrf': 'true' } })
+      .catch(function () {})
+      .then(function () {
+        try { sessionStorage.clear(); } catch (e) {}
+        window.location.href = '/app/login?nextUrl=' + encodeURIComponent('/');
+      });
+  }
+
   var account = null; // se pide una vez por carga de página (el menú se vuelve a montar al abrirlo)
   function buildUser() {
     var u = el('div', 'tsocNav__user');
     u.id = 'tsoc-nav-user';
-    u.innerHTML = '<span class="tsocNav__avatar">·</span><span class="tsocNav__who"><b></b><small></small></span>';
+    u.innerHTML = '<span class="tsocNav__avatar">·</span><span class="tsocNav__who"><b></b><small></small></span>' +
+      '<button type="button" class="tsocNav__logout" title="Cerrar sesión" aria-label="Cerrar sesión">' +
+      '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+      '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg></button>';
+    u.querySelector('.tsocNav__logout').addEventListener('click', logout);
     account = account || fetch('/api/v1/configuration/account', { credentials: 'same-origin' }).then(function (r) { return r.ok ? r.json() : null; });
     account.then(function (j) {
       var d = j && j.data; if (!d || !d.user_name) { u.hidden = true; return; }
