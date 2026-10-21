@@ -108,11 +108,13 @@
   // sesión; luego se limpia la sesión del navegador y se vuelve al login). Si la petición falla, igualmente al login.
   function logout(ev) {
     var b = ev.currentTarget; b.disabled = true;
+    // Con Logto (OpenID) la respuesta trae redirectURL para cerrar también la sesión allí.
     fetch('/auth/logout', { method: 'POST', credentials: 'same-origin', headers: { 'osd-xsrf': 'true' } })
-      .catch(function () {})
-      .then(function () {
+      .then(function (r) { return r.json(); })
+      .catch(function () { return {}; })
+      .then(function (j) {
         try { sessionStorage.clear(); } catch (e) {}
-        window.location.href = '/app/login?nextUrl=' + encodeURIComponent('/');
+        window.location.href = (j && j.redirectURL) || ('/app/login?nextUrl=' + encodeURIComponent('/'));
       });
   }
 

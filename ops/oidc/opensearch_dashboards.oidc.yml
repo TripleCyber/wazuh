@@ -1,0 +1,11 @@
+# Bloque a añadir al final de opensearch_dashboards.yml (Coolify > wazuh-stack > Files) para el login único con Logto.
+# El formulario de usuario/contraseña sigue disponible como respaldo (multiple_auth).
+# client_secret: lo pega el usuario en Coolify; NUNCA en git ni en el chat.
+opensearch_security.auth.multiple_auth_enabled: true
+opensearch_security.auth.type: ["basicauth", "openid"]
+opensearch_security.openid.connect_url: "https://auth.idp.tripleenable.com/oidc/.well-known/openid-configuration"
+opensearch_security.openid.client_id: "pdyo0aai6irvs2gbibgxs"
+opensearch_security.openid.client_secret: "PEGAR-AQUI-EL-SECRETO"
+opensearch_security.openid.base_redirect_url: "https://wazuh-dashboard.idp.tripleenable.com"
+opensearch_security.openid.scope: "openid profile email roles"
+opensearch_security.ui.openid.login.buttonname: "Entrar con TripleSOC"
