@@ -55,7 +55,9 @@ for n in range(b, b + 12):
 open(dst, "w").write("\n".join(lines))
 PY
 chmod 600 "$B/config-oidc.yml"
-docker cp "$B/config-oidc.yml" "$I:/tmp/config-oidc.yml"
+docker exec -u 0 "$I" rm -f /tmp/config-oidc.yml
+# Por stdin: con docker cp el archivo queda de root (600) y el usuario del contenedor no lo lee.
+docker exec -i "$I" bash -c 'cat > /tmp/config-oidc.yml' < "$B/config-oidc.yml"
 docker exec "$I" bash -c "$JH; $SA -f /tmp/config-oidc.yml -t config | tail -2; rm -f /tmp/config-oidc.yml"
 
 python3 - "$I" <<'PY'
