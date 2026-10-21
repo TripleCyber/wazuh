@@ -203,6 +203,17 @@ cat "$LG_JS" >> "$OUT/$CORE_JS"
 gzip -9 -n -c "$OUT/$CORE_JS" > "$OUT/$CORE_JS.gz"
 brotli -f -q 11 -o "$OUT/$CORE_JS.br" "$OUT/$CORE_JS"
 
+# ---------------------------------------------------------------- 4i. caché del navegador
+# Los bundles se sirven en /<build.number>/bundles/... con max-age de un año: con el número oficial
+# de siempre, el navegador seguiría usando la capa anterior tras cada despliegue. Cada imagen lleva
+# su propio número (segundos desde 1970; solo se usa en esas rutas), así la caché se renueva sola.
+BUILD_NUM=${TSOC_BUILD_NUM:-$(date +%s)}
+log "Número de build propio: $BUILD_NUM (renueva la caché del navegador)"
+install -D -m 0644 "$SRC/package.json" "$OUT/package.json"
+[[ $(grep -cE '^    "number": "[0-9]+",$' "$OUT/package.json") -eq 1 ]] || fail "no se encontró build.number en package.json"
+sed -i -E "s/^    \"number\": \"[0-9]+\",\$/    \"number\": \"$BUILD_NUM\",/" "$OUT/package.json"
+grep -q "\"number\": \"$BUILD_NUM\"" "$OUT/package.json" || fail "no se pudo cambiar build.number"
+
 # ---------------------------------------------------------------- 5. colores
 log "Aplicando paleta"
 THEME=$A/wz_v7_theme_overwrite.css
