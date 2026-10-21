@@ -134,7 +134,7 @@ sec "Dashboard y marca TripleSOC"
 code=$(docker exec "$DSH" curl -sk -o /dev/null -w '%{http_code}' --max-time 15 http://localhost:5601/app/login 2>/dev/null)
 [ "$code" = "200" ] && ok "dashboard responde (HTTP 200)" || fail "dashboard responde HTTP ${code:-nada}"
 J=/usr/share/wazuh-dashboard/src/core/target/public/core.entry.js
-for m in schema nav incidents rules guardian assistant; do
+for m in schema nav incidents rules guardian assistant login; do
   n=$(docker exec "$DSH" grep -c "==== TripleSOC $m ====" "$J" 2>/dev/null)
   [ "${n:-0}" -eq 1 ] && ok "módulo TripleSOC $m en el bundle" || fail "módulo TripleSOC $m: ${n:-0} copias (esperada 1)"
 done

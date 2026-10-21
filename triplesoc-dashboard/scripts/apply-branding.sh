@@ -191,6 +191,15 @@ AS_JS=$OVERLAY/triplesoc-assistant.js
 printf '\n' >> "$OUT/$CORE_JS"
 cat "$AS_JS" >> "$OUT/$CORE_JS"
 [[ $(grep -c '==== TripleSOC assistant ====' "$OUT/$CORE_JS") -eq 1 ]] || fail "asistente Guardian no añadido a $CORE_JS"
+
+# ---------------------------------------------------------------- 4h. portal de entrada
+# "Welcome to TripleSOC" + "Sign in with TripleEnable" (Logto). El formulario local queda plegado de respaldo.
+log "Portal de entrada (Sign in with TripleEnable)"
+LG_JS=$OVERLAY/triplesoc-login.js
+[[ -f "$LG_JS" ]] || fail "no existe $LG_JS"
+printf '\n' >> "$OUT/$CORE_JS"
+cat "$LG_JS" >> "$OUT/$CORE_JS"
+[[ $(grep -c '==== TripleSOC login ====' "$OUT/$CORE_JS") -eq 1 ]] || fail "portal de entrada no añadido a $CORE_JS"
 gzip -9 -n -c "$OUT/$CORE_JS" > "$OUT/$CORE_JS.gz"
 brotli -f -q 11 -o "$OUT/$CORE_JS.br" "$OUT/$CORE_JS"
 
