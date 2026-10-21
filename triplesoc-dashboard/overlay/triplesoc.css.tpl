@@ -148,7 +148,7 @@ body.tsoc-login .login-wrapper form > .euiFormRow:has(a[aria-label="openid_login
 body.tsoc-login .login-wrapper form > .euiHorizontalRule,
 body.tsoc-login .login-wrapper form > .euiSpacer { display: none !important; }
 /* Formulario local plegado. Sin display:none ni opacity:0: con la contraseña autocompletada por Chrome
-   eso deja la pestaña sin pintar capturas. Plegado = altura 0 + opacity .01 (+ inert desde el JS). */
+   eso deja la pestaña sin pintar capturas. Plegado = altura 0 + opacity .01 (+ tabindex -1 desde el JS). */
 body.tsoc-login .login-wrapper {
   max-height: 0; overflow: hidden; opacity: .01; pointer-events: none; transition: max-height .25s ease, opacity .2s ease;
 }
@@ -163,6 +163,9 @@ body.tsoc-login .login-wrapper .euiFormControlLayout {
 body.tsoc-login .login-wrapper .euiFieldText, body.tsoc-login .login-wrapper .euiFieldPassword,
 body.tsoc-login .login-wrapper .euiFormControlLayout__prepend, body.tsoc-login .login-wrapper .euiFormControlLayout__append {
   max-width: none !important; background-color: #121514 !important;
+}
+body.tsoc-login .login-wrapper input:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 40px #121514 inset !important; -webkit-text-fill-color: #F7F8F7 !important; caret-color: #F7F8F7;
 }
 body.tsoc-login .login-wrapper .btn-login { width: 100%; height: 40px !important; }
 .tsocLogin { display: flex; flex-direction: column; align-items: center; text-align: center; color: #F7F8F7; font-family: var(--tsoc-font); }

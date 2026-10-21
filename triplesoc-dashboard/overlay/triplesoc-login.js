@@ -23,6 +23,12 @@
   var CHECK = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" ' +
     'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
 
+  // Sin aria-hidden por el mismo motivo que inert (la contraseña autocompletada deja la pestaña sin capturas).
+  function tabbable(wrapper, on) {
+    var els = wrapper.querySelectorAll('input, button, a');
+    for (var i = 0; i < els.length; i++) if (els[i].tabIndex !== (on ? 0 : -1)) els[i].tabIndex = on ? 0 : -1;
+  }
+
   function isLogin() { return /\/app\/login\/?$/.test(location.pathname); }
 
   // El enlace nativo de OpenID ya trae nextUrl cuando corresponde: se usa el suyo al hacer clic.
@@ -52,7 +58,7 @@
       var open = document.body.classList.toggle('tsoc-login--local');
       ev.currentTarget.setAttribute('aria-expanded', String(open));
       ev.currentTarget.textContent = open ? 'Hide local account' : 'Use a local account';
-      wrapper.inert = !open;
+      tabbable(wrapper, open);
       if (open) { var u = wrapper.querySelector('input'); if (u) u.focus(); }
     });
 
@@ -80,9 +86,8 @@
       // Si el inicio de sesión local falló, el formulario se queda abierto para ver el error.
       if (wrapper.querySelector('.euiCallOut--danger, .euiFormErrorText')) document.body.classList.add('tsoc-login--local');
       document.body.classList.add('tsoc-login');
-      // Plegado: fuera del orden de tabulación y de los lectores de pantalla.
-      var local = document.body.classList.contains('tsoc-login--local');
-      if (wrapper.inert === local) wrapper.inert = !local;
+      // Plegado: fuera del orden de tabulación (sin inert: igual que display:none, deja la pestaña sin capturas).
+      tabbable(wrapper, document.body.classList.contains('tsoc-login--local'));
     } catch (err) { /* nunca romper la página de entrada */ }
   }
   setInterval(tick, 300);
