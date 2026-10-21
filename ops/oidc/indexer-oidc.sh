@@ -7,7 +7,8 @@
 set -euo pipefail
 S=${SID:-yf8u7icjiq4vdhetmea7rmfr}; I=wazuh-indexer-$S
 OIDC_URL=${OIDC_URL:-https://auth.idp.tripleenable.com/oidc/.well-known/openid-configuration}
-SUBJECT=${OIDC_SUBJECT:-email}
+# sub: identificador estable de Logto (recomendado por el administrador de Logto; no todos los usuarios tienen email)
+SUBJECT=${OIDC_SUBJECT:-sub}
 B=${BACKUP:-/opt/triplesoc/backup-$(date +%Y%m%d-%H%M)-oidc}
 C=/usr/share/wazuh-indexer/config/certs
 SA="/usr/share/wazuh-indexer/plugins/opensearch-security/tools/securityadmin.sh -cacert $C/root-ca.pem -cert $C/admin.pem -key $C/admin-key.pem -icl -nhnv -h localhost"
@@ -44,7 +45,12 @@ if "openid_auth_domain:" not in txt:
     lines[i + 1:i + 1] = block.split("\n")
     print("config: openid_auth_domain añadido (subject_key=%s)" % subject)
 else:
-    print("config: openid_auth_domain ya estaba")
+    o = next(n for n, l in enumerate(lines) if "openid_auth_domain:" in l)
+    for n in range(o, o + 16):
+        if re.match(r"^\s+subject_key:", lines[n]):
+            lines[n] = re.sub(r"subject_key:.*", 'subject_key: "%s"' % subject, lines[n])
+            break
+    print("config: openid_auth_domain ya estaba (subject_key=%s)" % subject)
 # Con varios métodos de login, el básico no debe pedir contraseña al navegador (challenge).
 b = next(n for n, l in enumerate(lines) if "basic_internal_auth_domain:" in l)
 for n in range(b, b + 12):
