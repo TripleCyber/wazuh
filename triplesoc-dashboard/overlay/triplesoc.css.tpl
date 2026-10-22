@@ -134,62 +134,98 @@ body { color: var(--tsoc-text); -webkit-font-smoothing: antialiased; }
 .euiPanel.login-wrapper, .login-wrapper .euiPanel {
   border-radius: 16px !important; box-shadow: 0 24px 64px rgba(0, 0, 0, .55) !important;
 }
-/* Portal de entrada "El escudo bloquea" (triplesoc-login.js añade #tsoc-login, capa fija con canvas, y la clase
-   tsoc-login al body). El login nativo queda debajo; /app/login#local lo muestra sin el portal. */
-body.tsoc-login { overflow: hidden !important; background: #070A09 !important; }
+/* Portal de entrada "Aurora" (triplesoc-login.js añade #tsoc-login, capa fija con la tarjeta, y la clase tsoc-login
+   al body). Tarjeta tipo ventana: escena con canvas a la izquierda (corte en diagonal) y acceso breve a la derecha.
+   El login nativo queda debajo; /app/login#local lo muestra sin el portal. */
+body.tsoc-login { overflow: hidden !important; background: #D9E6DF !important; }
 /* Login nativo tapado. Sin display:none ni opacity:0: con la contraseña autocompletada por Chrome eso deja la
    pestaña sin pintar capturas. Plegado = altura 0 + opacity .01 (+ tabindex -1 desde el JS). */
 body.tsoc-login .login-wrapper { max-height: 0; overflow: hidden; opacity: .01; pointer-events: none; }
 .tsocPortal {
-  position: fixed; inset: 0; z-index: 2147482000; display: flex; align-items: center; box-sizing: border-box;
-  padding: 96px 8vw 96px; color: #F7F8F7; font-family: var(--tsoc-font);
-  background: radial-gradient(circle at 68% 50%, rgba(34, 197, 94, .09) 0, transparent 42%), #070A09;
+  position: fixed; inset: 0; z-index: 2147482000; display: grid; place-items: center; box-sizing: border-box;
+  padding: 32px; overflow-y: auto; font-family: var(--tsoc-font);
+  background: radial-gradient(circle at 20% 10%, #EAF5EF 0, #DCE8E1 45%, #CCDAD2 100%);
 }
-.tsocPortal__net { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-.tsocPortal__brand { position: absolute; top: 32px; left: 8vw; display: flex; align-items: center; gap: 10px; font: 600 16px/1 var(--tsoc-font); }
-.tsocPortal__brand img { width: 28px; height: 28px; }
-.tsocPortal__copy { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 28px; max-width: min(600px, 46vw); }
-.tsocPortal__eyebrow {
-  display: flex; align-items: center; gap: 10px; font: 500 13px/1 ui-monospace, "Cascadia Mono", Consolas, monospace;
-  letter-spacing: .16em; text-transform: uppercase; color: #22C55E;
+.tsocPortal__card {
+  display: grid; grid-template-columns: 1.12fr 1fr; width: min(1080px, 100%); height: min(620px, calc(100vh - 64px));
+  min-height: 480px; box-sizing: border-box; padding: 10px; border-radius: 24px; background: #F7FAF8;
+  box-shadow: 0 40px 80px -32px rgba(10, 40, 25, .38), 0 2px 6px rgba(10, 40, 25, .06);
 }
-.tsocPortal__eyebrow::before {
+.tsocPortal__scene {
+  position: relative; overflow: hidden; border-radius: 17px; background: #020806;
+  clip-path: polygon(0 0, 100% 0, 91% 100%, 0 100%);
+}
+.tsocPortal__scene canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.tsocPortal__top {
+  position: absolute; top: 22px; left: 24px; right: 40px; display: flex; justify-content: space-between; align-items: center;
+  color: #E9F0EB; font: 600 15px/1 var(--tsoc-font);
+}
+.tsocPortal__top small {
+  display: flex; align-items: center; gap: 8px; font: 500 11px/1 ui-monospace, "Cascadia Mono", Consolas, monospace;
+  letter-spacing: .14em; text-transform: uppercase; opacity: .8;
+}
+.tsocPortal__top small::before {
   content: ""; width: 7px; height: 7px; border-radius: 50%; background: #22C55E;
-  box-shadow: 0 0 0 4px rgba(34, 197, 94, .18); animation: tsocPulse 2s infinite;
+  box-shadow: 0 0 0 4px rgba(34, 197, 94, .25); animation: tsocPulse 2s infinite;
 }
 @keyframes tsocPulse { 50% { box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); } }
-.tsocPortal__title { margin: 0; font: 300 clamp(44px, 6vw, 86px)/1 var(--tsoc-font); letter-spacing: -.045em; color: #F7F8F7; }
-.tsocPortal__title b { display: block; font-weight: 700; }
+.tsocPortal__chip {
+  position: absolute; left: 20px; bottom: 20px; display: flex; align-items: center; gap: 12px; padding: 12px 18px 12px 12px;
+  border-radius: 14px; color: #F1F7F3; background: rgba(8, 18, 14, .45); border: 1px solid rgba(255, 255, 255, .14);
+  -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+}
+.tsocPortal__ic {
+  display: grid; place-items: center; width: 36px; height: 36px; border-radius: 10px;
+  background: rgba(34, 197, 94, .18); border: 1px solid rgba(134, 239, 172, .35);
+}
+.tsocPortal__ic svg { width: 19px; height: 19px; }
+.tsocPortal__chip b { display: block; font: 600 14px/1.25 var(--tsoc-font); }
+.tsocPortal__chip span { font-size: 12px; opacity: .75; }
+.tsocPortal__auth { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 32px 40px; }
+.tsocPortal__logo { display: flex; align-items: center; gap: 10px; margin-bottom: 26px; }
+.tsocPortal__logo img { width: 44px; height: 44px; }
+.tsocPortal__logo div { text-align: left; font: 700 23px/1 var(--tsoc-font); letter-spacing: -.01em; color: #0B1F15; }
+.tsocPortal__logo div span { color: #16A34A; }
+.tsocPortal__logo small {
+  display: block; margin-top: 3px; font: 500 9.5px/1.4 ui-monospace, "Cascadia Mono", Consolas, monospace;
+  letter-spacing: .3em; text-transform: uppercase; color: #6B7C72;
+}
+.tsocPortal__hi { margin: 0; font: 700 44px/1.05 var(--tsoc-font); letter-spacing: -.03em; color: #0B1F15; }
+.tsocPortal__sub { margin: 8px 0 0; font-size: 16px; color: #4F6157; }
+.tsocPortal__does {
+  margin: 18px 0 30px; font: 500 12px/1 ui-monospace, "Cascadia Mono", Consolas, monospace;
+  letter-spacing: .12em; text-transform: uppercase; color: #15803D;
+}
 .tsocPortal__cta {
-  position: relative; overflow: hidden; display: inline-flex; align-items: center; gap: 10px; height: 54px; padding: 0 28px;
-  border-radius: 10px; background: #22C55E; color: #04170E !important; font: 600 16px/1 var(--tsoc-font);
-  text-decoration: none !important; white-space: nowrap; transition: background .15s, transform .2s, box-shadow .2s;
+  position: relative; overflow: hidden; display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  width: 100%; max-width: 320px; height: 52px; border-radius: 12px; color: #fff !important; font: 600 16px/1 var(--tsoc-font);
+  text-decoration: none !important; white-space: nowrap;
+  background: linear-gradient(100deg, #15803D 0%, #22C55E 55%, #2DD4BF 100%);
+  box-shadow: 0 14px 30px -14px rgba(21, 128, 61, .75); transition: transform .2s, box-shadow .2s;
 }
 .tsocPortal__cta::after {
   content: ""; position: absolute; inset: 0; transform: translateX(-120%);
-  background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, .45) 50%, transparent 70%);
-  animation: tsocShine 4.5s 1.5s infinite;
+  background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, .4) 50%, transparent 70%);
+  animation: tsocShine 5s 1.2s infinite;
 }
-@keyframes tsocShine { 18%, 100% { transform: translateX(120%); } }
+@keyframes tsocShine { 16%, 100% { transform: translateX(120%); } }
 .tsocPortal__cta svg { width: 18px; height: 18px; transition: transform .2s; }
-.tsocPortal__cta:hover { background: #2BD468; transform: translateY(-2px); box-shadow: 0 14px 40px -12px rgba(34, 197, 94, .85); }
+.tsocPortal__cta:hover { transform: translateY(-2px); box-shadow: 0 18px 36px -14px rgba(21, 128, 61, .85); }
 .tsocPortal__cta:hover svg { transform: translateX(3px); }
-.tsocPortal__cta:focus-visible { outline: 2px solid #86EFAC; outline-offset: 3px; }
+.tsocPortal__cta:focus-visible { outline: 2px solid #15803D; outline-offset: 3px; }
 .tsocPortal__cta.is-busy { opacity: .85; pointer-events: none; }
-.tsocPortal__legal { position: absolute; left: 8vw; bottom: 28px; margin: 0; font: 400 12px/1.4 ui-monospace, "Cascadia Mono", Consolas, monospace; color: #56655C; }
-.tsocPortal__hud { position: absolute; right: 4vw; bottom: 26px; text-align: right; font: 400 12px/1.5 ui-monospace, "Cascadia Mono", Consolas, monospace; color: #6B7C72; }
-.tsocPortal__hud b { display: block; font: 500 22px/1.1 ui-monospace, "Cascadia Mono", Consolas, monospace; color: #86EFAC; font-variant-numeric: tabular-nums; }
-@media (max-width: 760px) {
-  .tsocPortal { align-items: flex-end; padding: 96px 24px 110px; }
-  .tsocPortal__copy { max-width: none; }
-  .tsocPortal__brand, .tsocPortal__legal { left: 24px; }
-  .tsocPortal__legal { right: 24px; bottom: 56px; }
-  .tsocPortal__hud { right: 24px; bottom: 16px; text-align: left; left: 24px; display: flex; gap: 8px; align-items: baseline; }
-  .tsocPortal__hud b { display: inline; font-size: 15px; }
+.tsocPortal__legal { margin: 24px 0 0; font: 400 11.5px/1.4 ui-monospace, "Cascadia Mono", Consolas, monospace; color: #7D8E85; }
+@media (max-width: 820px) {
+  .tsocPortal { padding: 16px; place-items: start center; }
+  .tsocPortal__card { grid-template-columns: 1fr; grid-template-rows: 200px auto; height: auto; min-height: 0; }
+  .tsocPortal__scene { clip-path: none; }
+  .tsocPortal__chip { display: none; }
+  .tsocPortal__auth { padding: 32px 20px 28px; }
+  .tsocPortal__hi { font-size: 36px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .tsocPortal__cta, .tsocPortal__cta svg { transition: none; }
-  .tsocPortal__cta::after, .tsocPortal__eyebrow::before { animation: none; }
+  .tsocPortal__cta::after, .tsocPortal__top small::before { animation: none; }
 }
 /* Base compartida con la pantalla "Access not granted". */
 .tsocLogin { display: flex; flex-direction: column; align-items: center; text-align: center; color: #F7F8F7; font-family: var(--tsoc-font); }

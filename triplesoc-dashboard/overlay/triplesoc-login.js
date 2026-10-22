@@ -1,6 +1,7 @@
 /* ==== TripleSOC login ====
-   Portal de entrada "El escudo bloquea": texto grande a la izquierda, un único botón "Sign in with TripleEnable"
-   (Logto / OpenID) y, a la derecha, una red con forma de escudo contra la que chocan amenazas (canvas).
+   Portal de entrada "Aurora" (referencia de Vladimir: tarjeta tipo ventana, escena a la izquierda y acceso breve):
+   una tarjeta centrada con una aurora verde sobre montañas (canvas) a la izquierda y, a la derecha, logo,
+   "Hi Analyst", qué hace el sistema en tres palabras y un único botón "Sign in with TripleEnable" (Logto / OpenID).
    El formulario nativo de usuario/contraseña NO se quita del código: queda tapado y solo se usa entrando por
    /app/login#local (respaldo del admin local si Logto no responde). No mueve nodos de React: añade una capa
    fija propia (clase tsoc-login en <body>). Si una versión futura cambia el login, se ve el login nativo.
@@ -13,6 +14,8 @@
 
   var ARROW = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" ' +
     'stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
+  var SHIELD = '<svg viewBox="0 0 24 24" fill="none" stroke="#86EFAC" stroke-width="2" stroke-linejoin="round" ' +
+    'aria-hidden="true"><path d="M12 2 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5z"/></svg>';
 
   // Sin aria-hidden por el mismo motivo que inert (la contraseña autocompletada deja la pestaña sin capturas).
   function tabbable(wrapper, on) {
@@ -31,83 +34,73 @@
     return (a && a.getAttribute('href')) || ('/auth/openid/captureUrlFragment' + location.search);
   }
 
-  // ---------------------------------------------------------------- escudo (canvas)
-  var G = '34,197,94', M = '134,239,172', R = '240,82,82';
+  // ---------------------------------------------------------------- aurora (canvas)
   function rnd(a, b) { return a + Math.random() * (b - a); }
-  // Silueta del escudo en coordenadas 0..1 (u horizontal, v vertical).
-  function half(v) { return v < .45 ? .5 - (v < .06 ? (.06 - v) * 1.2 : 0) : .5 * Math.sqrt(Math.max(0, 1 - Math.pow((v - .45) / .55, 2))); }
-  function inShield(u, v) { return v >= 0 && v <= 1 && Math.abs(u - .5) < half(v); }
+  // Cresta de montaña por desplazamiento del punto medio (valores 0..1 de alto).
+  function ridge(n, base, amp, rough) {
+    var p = []; for (var i = 0; i <= n; i++) p.push(0);
+    p[0] = rnd(-1, 1); p[n] = rnd(-1, 1);
+    (function sub(a, b, s) {
+      if (b - a < 2) return; var m = (a + b) >> 1;
+      p[m] = (p[a] + p[b]) / 2 + rnd(-s, s); sub(a, m, s * rough); sub(m, b, s * rough);
+    })(0, n, 1);
+    return p.map(function (v) { return base + v * amp; });
+  }
 
-  function shield(root, c, counter) {
+  function aurora(root, c) {
     var x = c.getContext && c.getContext('2d');
     if (!x) return;
     var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
-    var nodes = [], E = [], threats = [], sparks = [], hits = [], last = 0, prev = 0, count = 0, w = 0, h = 0;
-    var mouse = { x: -1e4, y: -1e4 };
-    for (var i = 0; i < 44; i++) { var q = i / 44, v = q < .5 ? q * 2 : (1 - q) * 2, s = q < .5 ? -1 : 1; nodes.push({ u: .5 + s * half(v) * .985, v: v, rim: true }); }
-    while (nodes.length < 165) { var u = Math.random(), vv = Math.random(); if (inShield(u, vv) && Math.abs(u - .5) < half(vv) * .92) nodes.push({ u: u, v: vv }); }
-    nodes.forEach(function (n) { n.ph = rnd(0, 6.283); });
-    for (var a = 0; a < nodes.length; a++) for (var b = a + 1; b < nodes.length; b++) {
-      var d = Math.hypot(nodes[a].u - nodes[b].u, (nodes[a].v - nodes[b].v) * 1.2); if (d < .125) E.push([a, b, d]);
-    }
+    var w = 0, h = 0, stars = [], meteors = [], nextMeteor = 2000;
+    for (var i = 0; i < 240; i++) stars.push({ x: Math.random(), y: Math.random() * .72, r: Math.random() < .08 ? rnd(1, 1.6) : rnd(.3, .9), ph: rnd(0, 6.28), tw: rnd(.0006, .002) });
+    var ridges = [[ridge(64, .70, .07, .55), '#0a2a20'], [ridge(64, .80, .06, .55), '#061a14'], [ridge(64, .90, .04, .6), '#030d0a']];
+    // Cintas de la aurora: [altura base, color, velocidad, intensidad]
+    var bands = [[.22, '34,197,94', .0004, .9], [.30, '45,212,191', .0003, .6], [.16, '134,239,172', .0005, .5]];
+
     function size() {
       var dpr = Math.min(window.devicePixelRatio || 1, 2); w = c.clientWidth; h = c.clientHeight;
       c.width = w * dpr; c.height = h * dpr; x.setTransform(dpr, 0, 0, dpr, 0, 0);
     }
-    function glow(cx, cy, r, col, al) {
-      var g = x.createRadialGradient(cx, cy, 0, cx, cy, r); g.addColorStop(0, 'rgba(' + col + ',' + al + ')'); g.addColorStop(1, 'rgba(' + col + ',0)');
-      x.fillStyle = g; x.fillRect(cx - r, cy - r, r * 2, r * 2);
-    }
     function draw(t) {
-      x.clearRect(0, 0, w, h);
-      // Movimiento por tiempo (no por fotograma); con tope al volver de otra pestaña.
-      var dt = prev ? Math.min(4, (t - prev) / 16.7) : 1; prev = t;
-      // En pantallas estrechas el escudo va centrado arriba, detrás del texto.
-      var narrow = w < 760, S = narrow ? Math.min(h * .46, w * .8) : Math.min(h * .7, w * .5), sw = S * .82;
-      var ox = (narrow ? w * .5 : w * .68) - sw / 2, oy = narrow ? h * .1 : (h - S) / 2;
-      glow(ox + sw / 2, oy + S / 2, S * .7, G, .1);
-      if (t - last > 900) { last = t; threats.push({ x: w + 20, y: rnd(oy + S * .1, oy + S * .85), vx: -rnd(2.6, 4.2), vy: rnd(-.3, .3), trail: [] }); }
-      var P = nodes.map(function (n) {
-        var px = ox + n.u * sw, py = oy + n.v * S, light = 0;
-        hits.forEach(function (hh) { var dd = Math.hypot(px - hh.x, py - hh.y), age = (t - hh.t) / 1200; if (age < 1 && dd < S * .25) light = Math.max(light, (1 - age) * (1 - dd / (S * .25))); });
-        return [px + Math.sin(t * .0008 + n.ph) * 2, py + Math.cos(t * .0007 + n.ph) * 2, light];
+      var g = x.createLinearGradient(0, 0, 0, h);
+      g.addColorStop(0, '#020a10'); g.addColorStop(.55, '#05201a'); g.addColorStop(.8, '#0b3a2a'); g.addColorStop(1, '#04120d');
+      x.fillStyle = g; x.fillRect(0, 0, w, h);
+      stars.forEach(function (s) {
+        var a = .35 + .65 * Math.abs(Math.sin(t * s.tw + s.ph));
+        x.fillStyle = 'rgba(230,245,236,' + a * (1 - s.y * .8) + ')'; x.beginPath(); x.arc(s.x * w, s.y * h, s.r, 0, 6.283); x.fill();
       });
-      E.forEach(function (e) {
-        var p = P[e[0]], q = P[e[1]], l = Math.max(p[2], q[2]);
-        x.strokeStyle = 'rgba(' + (l > .05 ? M : G) + ',' + (.3 + l * .6) * (1 - e[2] / .125) + ')'; x.lineWidth = 1 + l;
-        x.beginPath(); x.moveTo(p[0], p[1]); x.lineTo(q[0], q[1]); x.stroke();
-      });
-      P.forEach(function (p, k) {
-        x.fillStyle = p[2] > .05 ? 'rgba(' + M + ',' + (.5 + p[2] * .5) + ')' : (nodes[k].rim ? 'rgba(' + M + ',.75)' : 'rgba(232,239,234,.6)');
-        x.beginPath(); x.arc(p[0], p[1], 1.5 + p[2] * 1.5, 0, 6.283); x.fill();
-      });
-      threats = threats.filter(function (k) {
-        k.trail.push([k.x, k.y]); if (k.trail.length > 22) k.trail.shift(); k.x += k.vx * dt; k.y += k.vy * dt;
-        if (inShield((k.x - ox) / sw, (k.y - oy) / S)) {
-          count++; if (counter) counter.textContent = count.toLocaleString('en-US'); hits.push({ x: k.x, y: k.y, t: t });
-          for (var j = 0; j < 16; j++) { var an = rnd(-1.4, 1.4); sparks.push({ x: k.x, y: k.y, vx: Math.cos(an) * rnd(.6, 2.2), vy: Math.sin(an) * rnd(.6, 2.2), t: t, c: Math.random() < .5 ? R : M }); }
-          return false;
-        }
-        x.strokeStyle = 'rgba(' + R + ',.5)'; x.lineWidth = 1.5; x.beginPath();
-        k.trail.forEach(function (p, j) { j ? x.lineTo(p[0], p[1]) : x.moveTo(p[0], p[1]); }); x.stroke();
-        glow(k.x, k.y, 10, R, .9);
-        return k.x > -20;
-      });
-      hits = hits.filter(function (hh) { return t - hh.t < 1200; });
-      sparks = sparks.filter(function (sp) {
-        var age = (t - sp.t) / 700; if (age > 1) return false;
-        sp.x += sp.vx * dt; sp.y += sp.vy * dt; sp.vx *= Math.pow(.96, dt); sp.vy *= Math.pow(.96, dt); x.fillStyle = 'rgba(' + sp.c + ',' + (1 - age) + ')'; x.fillRect(sp.x, sp.y, 2, 2);
+      if (t > nextMeteor) { nextMeteor = t + rnd(2600, 5200); meteors.push({ x: rnd(.3, 1.1) * w, y: rnd(0, .25) * h, t0: t, len: rnd(60, 120), sp: rnd(.35, .55) }); }
+      meteors = meteors.filter(function (m) {
+        var p = (t - m.t0) / 1100; if (p > 1) return false;
+        var hx = m.x - p * m.sp * w * .6, hy = m.y + p * m.sp * w * .3;
+        var mg = x.createLinearGradient(hx, hy, hx + m.len, hy - m.len * .5);
+        mg.addColorStop(0, 'rgba(240,255,246,' + (1 - p) + ')'); mg.addColorStop(1, 'rgba(240,255,246,0)');
+        x.strokeStyle = mg; x.lineWidth = 1.4; x.beginPath(); x.moveTo(hx, hy); x.lineTo(hx + m.len, hy - m.len * .5); x.stroke();
         return true;
       });
-      if (inShield((mouse.x - ox) / sw, (mouse.y - oy) / S)) glow(mouse.x, mouse.y, S * .18, M, .18);
+      x.globalCompositeOperation = 'lighter';
+      bands.forEach(function (b, bi) {
+        for (var i = 0; i <= w; i += 3) {
+          var u = i / w, y = h * (b[0] + .08 * Math.sin(u * 4 + t * b[2] + bi) + .04 * Math.sin(u * 11 - t * b[2] * 1.7));
+          var hg = h * (.22 + .1 * Math.sin(u * 6 + t * .0007 + bi));
+          var a = b[3] * (.35 + .65 * Math.pow(Math.sin(u * 3.14), 1.4)) * (.6 + .4 * Math.sin(u * 20 + t * .002 + bi));
+          var gg = x.createLinearGradient(0, y, 0, y + hg);
+          gg.addColorStop(0, 'rgba(' + b[1] + ',0)'); gg.addColorStop(.75, 'rgba(' + b[1] + ',' + (.55 * a) + ')'); gg.addColorStop(1, 'rgba(' + b[1] + ',0)');
+          x.fillStyle = gg; x.fillRect(i, y, 3, hg);
+        }
+      });
+      x.globalCompositeOperation = 'source-over';
+      ridges.forEach(function (L) {
+        x.fillStyle = L[1]; x.beginPath(); x.moveTo(0, h);
+        L[0].forEach(function (v, i) { x.lineTo(i / (L[0].length - 1) * w, v * h); });
+        x.lineTo(w, h); x.fill();
+      });
     }
     size();
-    window.addEventListener('resize', function () { size(); if (reduce) draw(0); });
-    root.addEventListener('pointermove', function (e) { mouse.x = e.clientX; mouse.y = e.clientY; });
-    root.addEventListener('pointerleave', function () { mouse.x = mouse.y = -1e4; });
-    if (reduce) { draw(0); return; }
+    window.addEventListener('resize', function () { size(); if (reduce) draw(3000); });
+    if (reduce) { draw(3000); return; }
     // requestAnimationFrame se pausa solo con la pestaña en segundo plano; se detiene al salir del login.
-    (function loop(t) { if (!root.isConnected) return; draw(t || 0); requestAnimationFrame(loop); })();
+    (function loop(t) { if (!root.isConnected) return; draw((t || 0) + 3000); requestAnimationFrame(loop); })();
   }
 
   function build() {
@@ -115,15 +108,22 @@
     root.id = 'tsoc-login';
     root.className = 'tsocPortal';
     root.innerHTML =
-      '<canvas class="tsocPortal__net" aria-hidden="true"></canvas>' +
-      '<div class="tsocPortal__brand"><img src="/ui/logos/wazuh_mark_on_dark.svg" alt=""><span>TripleSOC</span></div>' +
-      '<div class="tsocPortal__copy">' +
-      '<span class="tsocPortal__eyebrow">Live protection</span>' +
-      '<h1 class="tsocPortal__title">Welcome to<b>TripleSOC</b></h1>' +
-      '<a class="tsocPortal__cta" href="/auth/openid/captureUrlFragment"><span>Sign in with TripleEnable</span>' + ARROW + '</a>' +
+      '<div class="tsocPortal__card">' +
+      '<div class="tsocPortal__scene">' +
+      '<canvas aria-hidden="true"></canvas>' +
+      '<div class="tsocPortal__top"><span>TripleSOC</span><small>Live</small></div>' +
+      '<div class="tsocPortal__chip"><span class="tsocPortal__ic">' + SHIELD + '</span>' +
+      '<div><b>Always on watch</b><span>24/7 security operations</span></div></div>' +
       '</div>' +
-      '<p class="tsocPortal__legal">Secured by TripleEnable Identity · OpenID Connect · © ' + new Date().getFullYear() + ' TripleCyber</p>' +
-      '<div class="tsocPortal__hud" aria-hidden="true"><b>0</b>threats stopped</div>';
+      '<div class="tsocPortal__auth">' +
+      '<div class="tsocPortal__logo"><img src="/ui/logos/wazuh_mark_on_dark.svg" alt=""><div>Triple<span>SOC</span><small>Security operations</small></div></div>' +
+      '<h1 class="tsocPortal__hi">Hi Analyst</h1>' +
+      '<p class="tsocPortal__sub">Welcome back to TripleSOC</p>' +
+      '<p class="tsocPortal__does">Detect · Investigate · Respond</p>' +
+      '<a class="tsocPortal__cta" href="/auth/openid/captureUrlFragment"><span>Sign in with TripleEnable</span>' + ARROW + '</a>' +
+      '<p class="tsocPortal__legal">Secured by TripleEnable Identity · © ' + new Date().getFullYear() + ' TripleCyber</p>' +
+      '</div>' +
+      '</div>';
     root.querySelector('.tsocPortal__cta').addEventListener('click', function (ev) {
       ev.preventDefault();
       ev.currentTarget.classList.add('is-busy');
@@ -144,7 +144,7 @@
       if (!el) {
         el = build();
         document.body.appendChild(el);
-        shield(el, el.querySelector('canvas'), el.querySelector('.tsocPortal__hud b'));
+        aurora(el, el.querySelector('canvas'));
         document.title = 'Sign in · TripleSOC';
       }
       document.body.classList.add('tsoc-login');
