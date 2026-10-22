@@ -134,40 +134,64 @@ body { color: var(--tsoc-text); -webkit-font-smoothing: antialiased; }
 .euiPanel.login-wrapper, .login-wrapper .euiPanel {
   border-radius: 16px !important; box-shadow: 0 24px 64px rgba(0, 0, 0, .55) !important;
 }
-/* Portal de entrada (triplesoc-login.js añade #tsoc-login y la clase tsoc-login al body). Estilo del portal
-   de TripleEnable: fondo grafito con halo verde, bienvenida grande y un único botón principal. */
-body.tsoc-login, body.tsoc-login .application {
-  background: radial-gradient(circle at 50% 18%, rgba(34, 197, 94, .08) 0, rgba(94, 106, 210, .04) 35%, transparent 65%), #121514 !important;
+/* Portal de entrada "El escudo bloquea" (triplesoc-login.js añade #tsoc-login, capa fija con canvas, y la clase
+   tsoc-login al body). El login nativo queda debajo; /app/login?local lo muestra sin el portal. */
+body.tsoc-login { overflow: hidden !important; background: #070A09 !important; }
+/* Login nativo tapado. Sin display:none ni opacity:0: con la contraseña autocompletada por Chrome eso deja la
+   pestaña sin pintar capturas. Plegado = altura 0 + opacity .01 (+ tabindex -1 desde el JS). */
+body.tsoc-login .login-wrapper { max-height: 0; overflow: hidden; opacity: .01; pointer-events: none; }
+.tsocPortal {
+  position: fixed; inset: 0; z-index: 2147482000; display: flex; align-items: center; box-sizing: border-box;
+  padding: 96px 8vw 96px; color: #F7F8F7; font-family: var(--tsoc-font);
+  background: radial-gradient(circle at 68% 50%, rgba(34, 197, 94, .09) 0, transparent 42%), #070A09;
 }
-body.tsoc-login .application { min-height: 100vh; }
-body.tsoc-login .application > div { width: 100%; max-width: 480px; margin: 0 auto; padding: 64px 20px 40px; box-sizing: border-box; }
-body.tsoc-login .login-wrapper { width: 100% !important; max-width: none !important; margin: 0 !important; padding: 0 !important; }
-body.tsoc-login .login-wrapper > figure, body.tsoc-login .login-wrapper > .euiText,
-body.tsoc-login .login-wrapper > .euiSpacer,
-body.tsoc-login .login-wrapper form > .euiFormRow:has(a[aria-label="openid_login_button"]),
-body.tsoc-login .login-wrapper form > .euiHorizontalRule,
-body.tsoc-login .login-wrapper form > .euiSpacer { display: none !important; }
-/* Formulario local plegado. Sin display:none ni opacity:0: con la contraseña autocompletada por Chrome
-   eso deja la pestaña sin pintar capturas. Plegado = altura 0 + opacity .01 (+ tabindex -1 desde el JS). */
-body.tsoc-login .login-wrapper {
-  max-height: 0; overflow: hidden; opacity: .01; pointer-events: none; transition: max-height .25s ease, opacity .2s ease;
+.tsocPortal__net { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.tsocPortal__brand { position: absolute; top: 32px; left: 8vw; display: flex; align-items: center; gap: 10px; font: 600 16px/1 var(--tsoc-font); }
+.tsocPortal__brand img { width: 28px; height: 28px; }
+.tsocPortal__copy { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 28px; max-width: min(600px, 46vw); }
+.tsocPortal__eyebrow {
+  display: flex; align-items: center; gap: 10px; font: 500 13px/1 ui-monospace, "Cascadia Mono", Consolas, monospace;
+  letter-spacing: .16em; text-transform: uppercase; color: #22C55E;
 }
-body.tsoc-login--local .login-wrapper {
-  max-height: 420px; opacity: 1; pointer-events: auto; margin-top: 12px !important; padding: 20px !important;
-  border-radius: 10px; background: #191D1B; border: 1px solid rgba(255, 255, 255, .07);
+.tsocPortal__eyebrow::before {
+  content: ""; width: 7px; height: 7px; border-radius: 50%; background: #22C55E;
+  box-shadow: 0 0 0 4px rgba(34, 197, 94, .18); animation: tsocPulse 2s infinite;
 }
-body.tsoc-login .login-wrapper .euiFormRow, body.tsoc-login .login-wrapper .euiFormControlLayout { max-width: none !important; }
-body.tsoc-login .login-wrapper .euiFormControlLayout {
-  height: 40px; border: 1px solid rgba(255, 255, 255, .1); border-radius: 8px; overflow: hidden;
+@keyframes tsocPulse { 50% { box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); } }
+.tsocPortal__title { margin: 0; font: 300 clamp(44px, 6vw, 86px)/1 var(--tsoc-font); letter-spacing: -.045em; color: #F7F8F7; }
+.tsocPortal__title b { display: block; font-weight: 700; }
+.tsocPortal__cta {
+  position: relative; overflow: hidden; display: inline-flex; align-items: center; gap: 10px; height: 54px; padding: 0 28px;
+  border-radius: 10px; background: #22C55E; color: #04170E !important; font: 600 16px/1 var(--tsoc-font);
+  text-decoration: none !important; white-space: nowrap; transition: background .15s, transform .2s, box-shadow .2s;
 }
-body.tsoc-login .login-wrapper .euiFieldText, body.tsoc-login .login-wrapper .euiFieldPassword,
-body.tsoc-login .login-wrapper .euiFormControlLayout__prepend, body.tsoc-login .login-wrapper .euiFormControlLayout__append {
-  max-width: none !important; background-color: #121514 !important;
+.tsocPortal__cta::after {
+  content: ""; position: absolute; inset: 0; transform: translateX(-120%);
+  background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, .45) 50%, transparent 70%);
+  animation: tsocShine 4.5s 1.5s infinite;
 }
-body.tsoc-login .login-wrapper input:-webkit-autofill {
-  -webkit-box-shadow: 0 0 0 40px #121514 inset !important; -webkit-text-fill-color: #F7F8F7 !important; caret-color: #F7F8F7;
+@keyframes tsocShine { 18%, 100% { transform: translateX(120%); } }
+.tsocPortal__cta svg { width: 18px; height: 18px; transition: transform .2s; }
+.tsocPortal__cta:hover { background: #2BD468; transform: translateY(-2px); box-shadow: 0 14px 40px -12px rgba(34, 197, 94, .85); }
+.tsocPortal__cta:hover svg { transform: translateX(3px); }
+.tsocPortal__cta:focus-visible { outline: 2px solid #86EFAC; outline-offset: 3px; }
+.tsocPortal__cta.is-busy { opacity: .85; pointer-events: none; }
+.tsocPortal__legal { position: absolute; left: 8vw; bottom: 28px; margin: 0; font: 400 12px/1.4 ui-monospace, "Cascadia Mono", Consolas, monospace; color: #56655C; }
+.tsocPortal__hud { position: absolute; right: 4vw; bottom: 26px; text-align: right; font: 400 12px/1.5 ui-monospace, "Cascadia Mono", Consolas, monospace; color: #6B7C72; }
+.tsocPortal__hud b { display: block; font: 500 22px/1.1 ui-monospace, "Cascadia Mono", Consolas, monospace; color: #86EFAC; font-variant-numeric: tabular-nums; }
+@media (max-width: 760px) {
+  .tsocPortal { align-items: flex-end; padding: 96px 24px 110px; }
+  .tsocPortal__copy { max-width: none; }
+  .tsocPortal__brand, .tsocPortal__legal { left: 24px; }
+  .tsocPortal__legal { right: 24px; bottom: 56px; }
+  .tsocPortal__hud { right: 24px; bottom: 16px; text-align: left; left: 24px; display: flex; gap: 8px; align-items: baseline; }
+  .tsocPortal__hud b { display: inline; font-size: 15px; }
 }
-body.tsoc-login .login-wrapper .btn-login { width: 100%; height: 40px !important; }
+@media (prefers-reduced-motion: reduce) {
+  .tsocPortal__cta, .tsocPortal__cta svg { transition: none; }
+  .tsocPortal__cta::after, .tsocPortal__eyebrow::before { animation: none; }
+}
+/* Base compartida con la pantalla "Access not granted". */
 .tsocLogin { display: flex; flex-direction: column; align-items: center; text-align: center; color: #F7F8F7; font-family: var(--tsoc-font); }
 .tsocLogin__mark { position: relative; margin-bottom: 26px; }
 .tsocLogin__mark::before {
@@ -185,9 +209,6 @@ body.tsoc-login .login-wrapper .btn-login { width: 100%; height: 40px !important
   width: 100%; box-sizing: border-box; margin: 0 0 24px; padding: 18px 20px; list-style: none; text-align: left;
   background: #191D1B; border: 1px solid rgba(255, 255, 255, .07); border-radius: 10px;
 }
-.tsocLogin__card li { display: flex; gap: 12px; align-items: flex-start; font-size: 14px; line-height: 1.45; color: #E7ECE9; }
-.tsocLogin__card li + li { margin-top: 12px; }
-.tsocLogin__card svg { flex: 0 0 auto; margin-top: 2px; color: #22C55E; }
 .tsocLogin__primary {
   display: flex; align-items: center; justify-content: center; width: 100%; height: 46px; border-radius: 8px;
   background: #22C55E; color: #04170E !important; font: 600 15px/1 var(--tsoc-font); text-decoration: none !important;
@@ -197,16 +218,6 @@ body.tsoc-login .login-wrapper .btn-login { width: 100%; height: 40px !important
 .tsocLogin__primary:active { transform: translateY(1px); }
 .tsocLogin__primary:focus-visible { outline: 2px solid #86EFAC; outline-offset: 3px; }
 .tsocLogin__primary.is-busy { opacity: .8; pointer-events: none; }
-.tsocLogin__local {
-  margin-top: 14px; padding: 4px 8px; border: 0; background: none; cursor: pointer;
-  font: 500 13px/1.4 var(--tsoc-font); color: #8A9A93;
-}
-.tsocLogin__local:hover, .tsocLogin__local:focus-visible { color: #E7ECE9; text-decoration: underline; }
-.tsocLogin__foot { margin-top: 28px; padding-top: 22px; border-top: 1px solid rgba(255, 255, 255, .07); font-family: var(--tsoc-font); }
-.tsocLogin__foot div { padding: 0 12px; }
-.tsocLogin__foot div + div { margin-top: 16px; }
-.tsocLogin__foot b { display: block; font-size: 14px; font-weight: 600; color: #F7F8F7; }
-.tsocLogin__foot span { display: block; margin-top: 3px; font-size: 13px; color: #8A9A93; }
 .tsocLogin__legal { margin: 28px 0 0; text-align: center; font-size: 12px; color: #66746E; }
 /* Puerta de acceso: cuenta sin rol de TripleSOC (triplesoc-login.js). Tapa todo el panel. */
 body.tsoc-denied { overflow: hidden !important; }
@@ -226,7 +237,7 @@ body.tsoc-denied > *:not(#tsoc-denied) { visibility: hidden !important; }
 .tsocDenied__card small { margin-top: 6px; font-size: 12px; color: #66746E; font-family: ui-monospace, Consolas, monospace; }
 .tsocDenied .tsocLogin__primary { border: 0; cursor: pointer; }
 .tsocDenied .tsocLogin__primary:disabled { opacity: .8; cursor: default; }
-@media (max-width: 480px) { .tsocLogin__title { font-size: 28px; } body.tsoc-login .application > div { padding-top: 40px; } }
+@media (max-width: 480px) { .tsocLogin__title { font-size: 28px; } }
 
 /* ---------- Sin soporte externo del fabricante ---------- */
 [aria-label="Help menu"],
