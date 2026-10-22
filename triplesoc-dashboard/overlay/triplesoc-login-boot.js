@@ -8,8 +8,12 @@
   try {
     if (!/\/app\/login\/?$/.test(location.pathname) || location.hash === '#local') return;
     window.__tsocBoot = true;
+    // Capa fija (no fondo del body: la hoja del tema lo pinta oscuro con !important). Queda debajo del portal;
+    // triplesoc-login.js la quita si el portal no se usa (#local o sin OpenID).
     var cover = document.createElement('style');
-    cover.textContent = 'html,body{background:#E3E6E5!important}#osd_loading_message{display:none!important}';
+    cover.id = 'tsoc-boot-cover';
+    cover.textContent = 'html::before{content:"";position:fixed;inset:0;z-index:2147481000;' +
+      'background:radial-gradient(circle at 25% 10%,#F4F5F5 0,#E6E8E7 50%,#D8DBDA 100%)}#osd_loading_message{display:none!important}';
     document.head.appendChild(cover);
     var reveal = function () { if (!document.getElementById('tsoc-login') && cover.parentNode) cover.remove(); };
     var css = document.createElement('link');

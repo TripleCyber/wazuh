@@ -152,20 +152,27 @@
 
   // Arranque temprano: en /app/login, bootstrap.js carga este mismo archivo desde /ui/ (window.__tsocBoot)
   // antes que la aplicación, así el portal sale enseguida en lugar de "Loading..." y del login nativo.
-  var noOidc = 0;
+  var noOidc = 0, portal = null;
+  function off(el) {
+    document.body.classList.remove('tsoc-login');
+    if (el) el.remove();
+    portal = null;
+    var cover = document.getElementById('tsoc-boot-cover');
+    if (cover) cover.remove();
+  }
   function tick() {
     try {
       var el = document.getElementById('tsoc-login');
-      if (!isLogin() || localMode()) { document.body.classList.remove('tsoc-login'); if (el) el.remove(); return; }
+      if (!isLogin() || localMode()) { off(el); return; }
       var wrapper = document.querySelector('.login-wrapper');
       if (!wrapper && !window.__tsocBoot) return;
       // Solo si Logto está configurado (existe el botón nativo de OpenID); si no, login nativo intacto.
       if (wrapper && !document.querySelector('a[aria-label="openid_login_button"]')) {
         if (++noOidc < 5) return;
-        document.body.classList.remove('tsoc-login'); if (el) el.remove(); return;
+        off(el); return;
       }
       if (!el) {
-        el = build();
+        el = portal = build();
         document.body.appendChild(el);
         dome(el.querySelector('canvas'));
         document.title = 'Sign in · TripleSOC';
@@ -177,6 +184,16 @@
   }
   setInterval(tick, 300);
   tick();
+  // Al arrancar, la aplicación vacía el <body> (también el portal del arranque temprano): se vuelve a poner el
+  // MISMO portal antes de que el navegador pinte, sin parpadeo ni repintar la escena.
+  try {
+    new MutationObserver(function () {
+      if (portal && !portal.isConnected && isLogin() && !localMode()) {
+        document.body.appendChild(portal);
+        document.body.classList.add('tsoc-login');
+      }
+    }).observe(document.body, { childList: true });
+  } catch (err) { /* sin observador, tick() lo repone en 300 ms */ }
 
   // ---------------------------------------------------------------- puerta de acceso
   // Una cuenta de TripleEnable sin rol de TripleSOC (tsoc-admin / tsoc-analista / tsoc-lectura) inicia sesión
