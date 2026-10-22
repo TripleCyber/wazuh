@@ -208,6 +208,24 @@ body.tsoc-login .login-wrapper .btn-login { width: 100%; height: 40px !important
 .tsocLogin__foot b { display: block; font-size: 14px; font-weight: 600; color: #F7F8F7; }
 .tsocLogin__foot span { display: block; margin-top: 3px; font-size: 13px; color: #8A9A93; }
 .tsocLogin__legal { margin: 28px 0 0; text-align: center; font-size: 12px; color: #66746E; }
+/* Puerta de acceso: cuenta sin rol de TripleSOC (triplesoc-login.js). Tapa todo el panel. */
+body.tsoc-denied { overflow: hidden !important; }
+body.tsoc-denied > *:not(#tsoc-denied) { visibility: hidden !important; }
+.tsocDenied {
+  position: fixed; inset: 0; z-index: 2147483000; overflow-y: auto; box-sizing: border-box; padding: 72px 20px 40px;
+  justify-content: flex-start;
+  background: radial-gradient(circle at 50% 18%, rgba(229, 72, 77, .07) 0, rgba(94, 106, 210, .04) 35%, transparent 65%), #121514;
+}
+.tsocDenied > * { width: 100%; max-width: 440px; }
+.tsocDenied > .tsocLogin__mark { width: auto; }
+.tsocDenied__mark::before { background: radial-gradient(circle, rgba(229, 72, 77, .22) 0, transparent 70%); }
+.tsocDenied__mark span { border-color: rgba(229, 72, 77, .4); box-shadow: 0 0 0 6px rgba(229, 72, 77, .06); }
+.tsocDenied__card { display: flex; flex-direction: column; gap: 6px; font-size: 14px; line-height: 1.5; color: #E7ECE9; }
+.tsocDenied__card b { color: #F7F8F7; }
+.tsocDenied__card i { font-style: normal; color: #22C55E; }
+.tsocDenied__card small { margin-top: 6px; font-size: 12px; color: #66746E; font-family: ui-monospace, Consolas, monospace; }
+.tsocDenied .tsocLogin__primary { border: 0; cursor: pointer; }
+.tsocDenied .tsocLogin__primary:disabled { opacity: .8; cursor: default; }
 @media (max-width: 480px) { .tsocLogin__title { font-size: 28px; } body.tsoc-login .application > div { padding-top: 40px; } }
 
 /* ---------- Sin soporte externo del fabricante ---------- */

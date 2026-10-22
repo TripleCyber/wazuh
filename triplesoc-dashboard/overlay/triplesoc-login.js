@@ -4,6 +4,7 @@
    El formulario nativo de usuario/contraseña NO se quita: queda plegado en "Use a local account"
    (respaldo si Logto no responde). No mueve nodos de React: añade los suyos y oculta los nativos por CSS
    (clase tsoc-login en <body>). Si una versión futura cambia el login, se ve el login nativo de siempre.
+   Incluye la puerta de acceso: una cuenta sin rol de TripleSOC ve "Access not granted" en lugar del panel.
    apply-branding.sh lo AÑADE al final de core.entry.js. */
 ;(function () {
   'use strict';
@@ -92,5 +93,61 @@
   }
   setInterval(tick, 300);
   tick();
+
+  // ---------------------------------------------------------------- puerta de acceso
+  // Una cuenta de TripleEnable sin rol de TripleSOC (tsoc-admin / tsoc-analista / tsoc-lectura) inicia sesión
+  // pero no recibe permisos: el indexer solo le da own_index y la API de Wazuh ninguno (ops/oidc/wazuh-rbac.sh).
+  // Aquí además no ve el panel: pantalla "Access not granted" y cerrar sesión. Si la consulta falla, no bloquea
+  // (la protección de los datos está en el servidor, esto es la experiencia de usuario).
+  function signOut(btn) {
+    btn.disabled = true; btn.textContent = 'Signing out…';
+    fetch('/auth/logout', { method: 'POST', credentials: 'same-origin', headers: { 'osd-xsrf': 'true' } })
+      .then(function (r) { return r.json(); })
+      .catch(function () { return {}; })
+      .then(function (j) {
+        try { sessionStorage.clear(); } catch (e) {}
+        window.location.href = (j && j.redirectURL) || '/app/login';
+      });
+  }
+
+  function deny(name) {
+    if (document.getElementById('tsoc-denied')) return;
+    var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+    var d = document.createElement('section');
+    d.id = 'tsoc-denied';
+    d.className = 'tsocLogin tsocDenied';
+    d.setAttribute('role', 'alertdialog');
+    d.setAttribute('aria-labelledby', 'tsoc-denied-title');
+    d.innerHTML =
+      '<div class="tsocLogin__mark tsocDenied__mark"><span><img src="/ui/logos/wazuh_mark_on_dark.svg" alt=""></span></div>' +
+      '<h1 class="tsocLogin__title" id="tsoc-denied-title">Access not granted</h1>' +
+      '<p class="tsocLogin__lead">You are signed in with TripleEnable, but this account has not been assigned a TripleSOC role yet.</p>' +
+      '<div class="tsocLogin__card tsocDenied__card">' +
+      '<b>How to get access</b><span>Ask your TripleEnable administrator to grant you the <i>Admin</i>, <i>Analyst</i> or <i>Read-only</i> role, then sign in again.</span>' +
+      (name ? '<small>Account ID: ' + esc(name) + '</small>' : '') + '</div>' +
+      '<button type="button" class="tsocLogin__primary">Sign out</button>' +
+      '<p class="tsocLogin__legal">Secured by TripleEnable Identity · OpenID Connect</p>';
+    var btn = d.querySelector('.tsocLogin__primary');
+    btn.addEventListener('click', function () { signOut(btn); });
+    document.body.appendChild(d);
+    document.body.classList.add('tsoc-denied');
+    btn.focus();
+  }
+
+  // Para enseñar la pantalla sin una cuenta sin rol (consola: TSOCLogin.previewDenied()). No concede nada.
+  window.TSOCLogin = { previewDenied: function () { deny('preview'); } };
+
+  if (!isLogin() && !/^\/auth\//.test(location.pathname)) {
+    fetch('/api/v1/configuration/account', { credentials: 'same-origin' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) {
+        var a = j && (j.data || j);
+        if (!a || !Array.isArray(a.roles)) return;
+        // own_index lo recibe cualquier usuario autenticado (users "*"): no cuenta como acceso.
+        var real = a.roles.filter(function (r) { return r !== 'own_index'; });
+        if (!real.length) deny(a.user_name);
+      })
+      .catch(function () { /* sin bloqueo si la consulta falla */ });
+  }
 })();
 /* ==== fin TripleSOC login ==== */
