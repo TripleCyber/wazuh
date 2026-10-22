@@ -1,7 +1,9 @@
 /* ==== TripleSOC login ====
-   Portal de entrada "Aurora" (referencia de Vladimir: tarjeta tipo ventana, escena a la izquierda y acceso breve):
-   una tarjeta centrada con una aurora verde sobre montañas (canvas) a la izquierda y, a la derecha, logo,
-   "Hi Analyst", qué hace el sistema en tres palabras y un único botón "Sign in with TripleEnable" (Logto / OpenID).
+   Portal de entrada "Cúpula · atardecer" (elegido por Vladimir; referencia: tarjeta tipo ventana con escena a la
+   izquierda y acceso breve). Tarjeta blanca centrada: a la izquierda, una ciudad al atardecer protegida por una
+   cúpula (canvas, imagen FIJA: se dibuja una vez a la resolución real de la pantalla y con semilla fija, así se ve
+   nítida y siempre igual); a la derecha, el logo oficial, "Hi Analyst", qué hace el sistema en tres palabras y un
+   único botón "Sign in with TripleEnable" (Logto / OpenID).
    El formulario nativo de usuario/contraseña NO se quita del código: queda tapado y solo se usa entrando por
    /app/login#local (respaldo del admin local si Logto no responde). No mueve nodos de React: añade una capa
    fija propia (clase tsoc-login en <body>). Si una versión futura cambia el login, se ve el login nativo.
@@ -14,8 +16,15 @@
 
   var ARROW = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" ' +
     'stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
-  var SHIELD = '<svg viewBox="0 0 24 24" fill="none" stroke="#86EFAC" stroke-width="2" stroke-linejoin="round" ' +
-    'aria-hidden="true"><path d="M12 2 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5z"/></svg>';
+  // Escudo del logo oficial (brand/mark.svg.tpl con los colores de brand/brand.env).
+  var MARK = '<path d="M32 3 57 11.5V30c0 15.5-10.6 26.3-25 31C17.6 56.3 7 45.5 7 30V11.5Z" fill="#161616" stroke="#4A4A4A" stroke-width="2.5"/>' +
+    '<g fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="4">' +
+    '<g stroke="#E5484D"><circle cx="21" cy="33" r="3.6" stroke-width="3"/><path d="M23.6 30.4 35.5 18.5"/><path d="M28.5 18H36v7.5"/></g>' +
+    '<g stroke="#1AA54A"><circle cx="27" cy="46" r="3.6" stroke-width="3"/><path d="M29.6 43.4 43.5 29.5"/><path d="M36.5 29H44v7.5"/></g></g>';
+  // Logo oficial completo (brand/logo.svg.tpl): "Triple" en verde y "SOC" en rojo.
+  var LOGO = '<svg class="tsocPortal__logo" viewBox="0 0 320 72" role="img" aria-label="TripleSOC"><g transform="translate(2 4)">' + MARK + '</g>' +
+    '<text x="74" y="49" font-family="Roboto, \'Segoe UI\', Inter, Helvetica, Arial, sans-serif" font-size="38" font-weight="700" ' +
+    'letter-spacing="-0.5" fill="#1AA54A">Triple<tspan fill="#BB2227">SOC</tspan></text></svg>';
 
   // Sin aria-hidden por el mismo motivo que inert (la contraseña autocompletada deja la pestaña sin capturas).
   function tabbable(wrapper, on) {
@@ -34,73 +43,83 @@
     return (a && a.getAttribute('href')) || ('/auth/openid/captureUrlFragment' + location.search);
   }
 
-  // ---------------------------------------------------------------- aurora (canvas)
-  function rnd(a, b) { return a + Math.random() * (b - a); }
-  // Cresta de montaña por desplazamiento del punto medio (valores 0..1 de alto).
-  function ridge(n, base, amp, rough) {
-    var p = []; for (var i = 0; i <= n; i++) p.push(0);
-    p[0] = rnd(-1, 1); p[n] = rnd(-1, 1);
-    (function sub(a, b, s) {
-      if (b - a < 2) return; var m = (a + b) >> 1;
-      p[m] = (p[a] + p[b]) / 2 + rnd(-s, s); sub(a, m, s * rough); sub(m, b, s * rough);
-    })(0, n, 1);
-    return p.map(function (v) { return base + v * amp; });
+  // ---------------------------------------------------------------- cúpula al atardecer (canvas, imagen fija)
+  // Generador con semilla: la misma ciudad y las mismas estrellas en cada visita y al cambiar el tamaño.
+  function seeded(seed) {
+    return function () {
+      seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+      var t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
   }
 
-  function aurora(root, c) {
+  function dome(c) {
     var x = c.getContext && c.getContext('2d');
     if (!x) return;
-    var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
-    var w = 0, h = 0, stars = [], meteors = [], nextMeteor = 2000;
-    for (var i = 0; i < 240; i++) stars.push({ x: Math.random(), y: Math.random() * .72, r: Math.random() < .08 ? rnd(1, 1.6) : rnd(.3, .9), ph: rnd(0, 6.28), tw: rnd(.0006, .002) });
-    var ridges = [[ridge(64, .70, .07, .55), '#0a2a20'], [ridge(64, .80, .06, .55), '#061a14'], [ridge(64, .90, .04, .6), '#030d0a']];
-    // Cintas de la aurora: [altura base, color, velocidad, intensidad]
-    var bands = [[.22, '34,197,94', .0004, .9], [.30, '45,212,191', .0003, .6], [.16, '134,239,172', .0005, .5]];
+    function paint() {
+      var w = c.clientWidth, h = c.clientHeight;
+      if (!w || !h) return;
+      // Resolución real del dispositivo (sin tope bajo): es una sola pintura, así que puede ser nítida.
+      var dpr = Math.min(window.devicePixelRatio || 1, 3);
+      c.width = Math.round(w * dpr); c.height = Math.round(h * dpr); x.setTransform(dpr, 0, 0, dpr, 0, 0);
+      var r = seeded(20261022), rnd = function (a, b) { return a + r() * (b - a); };
 
-    function size() {
-      var dpr = Math.min(window.devicePixelRatio || 1, 2); w = c.clientWidth; h = c.clientHeight;
-      c.width = w * dpr; c.height = h * dpr; x.setTransform(dpr, 0, 0, dpr, 0, 0);
-    }
-    function draw(t) {
+      // Cielo: azul pizarra que cae a un horizonte cálido.
       var g = x.createLinearGradient(0, 0, 0, h);
-      g.addColorStop(0, '#020a10'); g.addColorStop(.55, '#05201a'); g.addColorStop(.8, '#0b3a2a'); g.addColorStop(1, '#04120d');
+      g.addColorStop(0, '#0b1424'); g.addColorStop(.6, '#24324a'); g.addColorStop(1, '#6b5a55');
       x.fillStyle = g; x.fillRect(0, 0, w, h);
-      stars.forEach(function (s) {
-        var a = .35 + .65 * Math.abs(Math.sin(t * s.tw + s.ph));
-        x.fillStyle = 'rgba(230,245,236,' + a * (1 - s.y * .8) + ')'; x.beginPath(); x.arc(s.x * w, s.y * h, s.r, 0, 6.283); x.fill();
-      });
-      if (t > nextMeteor) { nextMeteor = t + rnd(2600, 5200); meteors.push({ x: rnd(.3, 1.1) * w, y: rnd(0, .25) * h, t0: t, len: rnd(60, 120), sp: rnd(.35, .55) }); }
-      meteors = meteors.filter(function (m) {
-        var p = (t - m.t0) / 1100; if (p > 1) return false;
-        var hx = m.x - p * m.sp * w * .6, hy = m.y + p * m.sp * w * .3;
-        var mg = x.createLinearGradient(hx, hy, hx + m.len, hy - m.len * .5);
-        mg.addColorStop(0, 'rgba(240,255,246,' + (1 - p) + ')'); mg.addColorStop(1, 'rgba(240,255,246,0)');
-        x.strokeStyle = mg; x.lineWidth = 1.4; x.beginPath(); x.moveTo(hx, hy); x.lineTo(hx + m.len, hy - m.len * .5); x.stroke();
-        return true;
-      });
-      x.globalCompositeOperation = 'lighter';
-      bands.forEach(function (b, bi) {
-        for (var i = 0; i <= w; i += 3) {
-          var u = i / w, y = h * (b[0] + .08 * Math.sin(u * 4 + t * b[2] + bi) + .04 * Math.sin(u * 11 - t * b[2] * 1.7));
-          var hg = h * (.22 + .1 * Math.sin(u * 6 + t * .0007 + bi));
-          var a = b[3] * (.35 + .65 * Math.pow(Math.sin(u * 3.14), 1.4)) * (.6 + .4 * Math.sin(u * 20 + t * .002 + bi));
-          var gg = x.createLinearGradient(0, y, 0, y + hg);
-          gg.addColorStop(0, 'rgba(' + b[1] + ',0)'); gg.addColorStop(.75, 'rgba(' + b[1] + ',' + (.55 * a) + ')'); gg.addColorStop(1, 'rgba(' + b[1] + ',0)');
-          x.fillStyle = gg; x.fillRect(i, y, 3, hg);
+      for (var i = 0; i < 140; i++) {
+        var sy = r() * .5, big = r() < .08;
+        x.fillStyle = 'rgba(235,240,245,' + (.35 + r() * .55) * (1 - sy) + ')';
+        x.beginPath(); x.arc(r() * w, sy * h, big ? rnd(1, 1.5) : rnd(.35, .8), 0, 6.283); x.fill();
+      }
+      var hz = x.createLinearGradient(0, h * .55, 0, h);
+      hz.addColorStop(0, 'rgba(230,170,120,0)'); hz.addColorStop(1, 'rgba(230,170,120,.18)');
+      x.fillStyle = hz; x.fillRect(0, h * .55, w, h * .45);
+
+      // Cúpula plateada con su malla y una franja de escaneo verde (fija).
+      var cx = w * .45, cy = h * .98, R = Math.min(w * .62, h * .82), D = '225,230,236';
+      var gl = x.createRadialGradient(cx, cy, R * .2, cx, cy, R * 1.05);
+      gl.addColorStop(0, 'rgba(' + D + ',.06)'); gl.addColorStop(.92, 'rgba(' + D + ',.05)'); gl.addColorStop(1, 'rgba(' + D + ',0)');
+      x.fillStyle = gl; x.beginPath(); x.arc(cx, cy, R * 1.05, Math.PI, 0); x.fill();
+      x.strokeStyle = 'rgba(' + D + ',.11)'; x.lineWidth = 1;
+      for (var k = 1; k < 6; k++) { x.beginPath(); x.ellipse(cx, cy, R, R * k / 6, 0, Math.PI, 0); x.stroke(); }
+      for (var m = 1; m < 8; m++) {
+        var a = Math.PI + m * Math.PI / 8;
+        x.beginPath(); x.moveTo(cx, cy - R); x.quadraticCurveTo(cx + Math.cos(a) * R * 1.1, cy + Math.sin(a) * R * .6, cx + Math.cos(a) * R, cy); x.stroke();
+      }
+      var sp = .42, sy2 = cy - R * sp, hw = Math.sqrt(Math.max(0, R * R - (cy - sy2) * (cy - sy2)));
+      var sg = x.createLinearGradient(0, sy2, 0, sy2 + R * .07);
+      sg.addColorStop(0, 'rgba(26,165,74,.4)'); sg.addColorStop(1, 'rgba(26,165,74,0)');
+      x.fillStyle = sg; x.fillRect(cx - hw, sy2, hw * 2, R * .07);
+      x.strokeStyle = 'rgba(' + D + ',.75)'; x.lineWidth = 1.4; x.shadowColor = 'rgba(' + D + ',.7)'; x.shadowBlur = 12;
+      x.beginPath(); x.arc(cx, cy, R, Math.PI, 0); x.stroke(); x.shadowBlur = 0;
+
+      // Ciudad: edificios carbón, ventanas cálidas y balizas rojas en los más altos.
+      var x0 = 0;
+      while (x0 < 1) {
+        var bw = rnd(.025, .06), bh = rnd(.12, .42) * (1 - Math.abs(x0 - .45) * .9), bx = x0 * w, bwp = bw * w, bhp = bh * h, by = h - bhp;
+        x.fillStyle = '#0a0d12'; x.fillRect(bx, by, bwp, bhp);
+        for (var j = 0; j < 26; j++) {
+          var on = r() < .5, warm = r() < .75, u = r(), v = r(), al = .5 + r() * .35;
+          if (!on) continue;
+          x.fillStyle = (warm ? 'rgba(255,210,140,' : 'rgba(255,236,200,') + al + ')';
+          x.fillRect(Math.round(bx + 2 + u * (bwp - 5)), Math.round(by + 4 + v * (bhp - 8)), 1.6, 1.6);
         }
-      });
-      x.globalCompositeOperation = 'source-over';
-      ridges.forEach(function (L) {
-        x.fillStyle = L[1]; x.beginPath(); x.moveTo(0, h);
-        L[0].forEach(function (v, i) { x.lineTo(i / (L[0].length - 1) * w, v * h); });
-        x.lineTo(w, h); x.fill();
-      });
+        if (bh > .3 && r() < .6) {
+          var px = bx + bwp / 2, py = by - 2, bg = x.createRadialGradient(px, py, 0, px, py, 9);
+          bg.addColorStop(0, 'rgba(229,72,77,.45)'); bg.addColorStop(1, 'rgba(229,72,77,0)');
+          x.fillStyle = bg; x.fillRect(px - 9, py - 9, 18, 18);
+          x.fillStyle = 'rgba(229,72,77,.95)'; x.beginPath(); x.arc(px, py, 1.8, 0, 6.283); x.fill();
+        }
+        x0 += bw + rnd(0, .006);
+      }
     }
-    size();
-    window.addEventListener('resize', function () { size(); if (reduce) draw(3000); });
-    if (reduce) { draw(3000); return; }
-    // requestAnimationFrame se pausa solo con la pestaña en segundo plano; se detiene al salir del login.
-    (function loop(t) { if (!root.isConnected) return; draw((t || 0) + 3000); requestAnimationFrame(loop); })();
+    paint();
+    // Solo se vuelve a pintar si cambia el tamaño (misma semilla: misma imagen).
+    var t = 0;
+    window.addEventListener('resize', function () { clearTimeout(t); t = setTimeout(paint, 120); });
   }
 
   function build() {
@@ -111,15 +130,14 @@
       '<div class="tsocPortal__card">' +
       '<div class="tsocPortal__scene">' +
       '<canvas aria-hidden="true"></canvas>' +
-      '<div class="tsocPortal__top"><span>TripleSOC</span><small>Live</small></div>' +
-      '<div class="tsocPortal__chip"><span class="tsocPortal__ic">' + SHIELD + '</span>' +
-      '<div><b>Always on watch</b><span>24/7 security operations</span></div></div>' +
+      '<div class="tsocPortal__top"><small>Live</small></div>' +
+      '<div class="tsocPortal__chip"><svg viewBox="0 0 64 64" aria-hidden="true">' + MARK + '</svg>' +
+      '<div><b>Your whole organization</b><span>One shield over every device</span></div></div>' +
       '</div>' +
-      '<div class="tsocPortal__auth">' +
-      '<div class="tsocPortal__logo"><img src="/ui/logos/wazuh_mark_on_dark.svg" alt=""><div>Triple<span>SOC</span><small>Security operations</small></div></div>' +
+      '<div class="tsocPortal__auth">' + LOGO +
       '<h1 class="tsocPortal__hi">Hi Analyst</h1>' +
       '<p class="tsocPortal__sub">Welcome back to TripleSOC</p>' +
-      '<p class="tsocPortal__does">Detect · Investigate · Respond</p>' +
+      '<p class="tsocPortal__does">Detect<i class="is-green"></i>Investigate<i class="is-red"></i>Respond</p>' +
       '<a class="tsocPortal__cta" href="/auth/openid/captureUrlFragment"><span>Sign in with TripleEnable</span>' + ARROW + '</a>' +
       '<p class="tsocPortal__legal">Secured by TripleEnable Identity · © ' + new Date().getFullYear() + ' TripleCyber</p>' +
       '</div>' +
@@ -144,7 +162,7 @@
       if (!el) {
         el = build();
         document.body.appendChild(el);
-        aurora(el, el.querySelector('canvas'));
+        dome(el.querySelector('canvas'));
         document.title = 'Sign in · TripleSOC';
       }
       document.body.classList.add('tsoc-login');
