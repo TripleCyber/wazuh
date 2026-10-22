@@ -135,7 +135,7 @@ body { color: var(--tsoc-text); -webkit-font-smoothing: antialiased; }
   border-radius: 16px !important; box-shadow: 0 24px 64px rgba(0, 0, 0, .55) !important;
 }
 /* Portal de entrada "El escudo bloquea" (triplesoc-login.js añade #tsoc-login, capa fija con canvas, y la clase
-   tsoc-login al body). El login nativo queda debajo; /app/login?local lo muestra sin el portal. */
+   tsoc-login al body). El login nativo queda debajo; /app/login#local lo muestra sin el portal. */
 body.tsoc-login { overflow: hidden !important; background: #070A09 !important; }
 /* Login nativo tapado. Sin display:none ni opacity:0: con la contraseña autocompletada por Chrome eso deja la
    pestaña sin pintar capturas. Plegado = altura 0 + opacity .01 (+ tabindex -1 desde el JS). */

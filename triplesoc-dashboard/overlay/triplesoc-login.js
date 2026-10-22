@@ -2,7 +2,7 @@
    Portal de entrada "El escudo bloquea": texto grande a la izquierda, un único botón "Sign in with TripleEnable"
    (Logto / OpenID) y, a la derecha, una red con forma de escudo contra la que chocan amenazas (canvas).
    El formulario nativo de usuario/contraseña NO se quita del código: queda tapado y solo se usa entrando por
-   /app/login?local (respaldo del admin local si Logto no responde). No mueve nodos de React: añade una capa
+   /app/login#local (respaldo del admin local si Logto no responde). No mueve nodos de React: añade una capa
    fija propia (clase tsoc-login en <body>). Si una versión futura cambia el login, se ve el login nativo.
    Incluye la puerta de acceso: una cuenta sin rol de TripleSOC ve "Access not granted" en lugar del panel.
    apply-branding.sh lo AÑADE al final de core.entry.js. */
@@ -21,8 +21,9 @@
   }
 
   function isLogin() { return /\/app\/login\/?$/.test(location.pathname); }
-  // Respaldo: /app/login?local muestra el login nativo (usuario y contraseña) sin el portal.
-  function localMode() { return /[?&]local(=|&|$)/.test(location.search); }
+  // Respaldo: /app/login#local muestra el login nativo (usuario y contraseña) sin el portal.
+  // Con # y no con ?: el servidor rechaza parámetros desconocidos en /app/login (400) y el # no le llega.
+  function localMode() { return location.hash === '#local'; }
 
   // El enlace nativo de OpenID ya trae nextUrl cuando corresponde: se usa el suyo al hacer clic.
   function oidcHref() {
