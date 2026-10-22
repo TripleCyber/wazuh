@@ -200,6 +200,17 @@ LG_JS=$OVERLAY/triplesoc-login.js
 printf '\n' >> "$OUT/$CORE_JS"
 cat "$LG_JS" >> "$OUT/$CORE_JS"
 [[ $(grep -c '==== TripleSOC login ====' "$OUT/$CORE_JS") -eq 1 ]] || fail "portal de entrada no añadido a $CORE_JS"
+# Arranque temprano: el mismo archivo se sirve en /ui/triplesoc-login.js y bootstrap.js lo carga en /app/login
+# antes que la aplicación (sin esto, al recargar se ven unos segundos "Loading..." y el login nativo).
+install -D -m 0644 "$LG_JS" "$OUT/$A/triplesoc-login.js"
+BOOT_TPL=src/legacy/ui/ui_render/bootstrap/template.js.hbs
+LB_JS=$OVERLAY/triplesoc-login-boot.js
+[[ -f "$SRC/$BOOT_TPL" && -f "$LB_JS" ]] || fail "no existe $BOOT_TPL o $LB_JS"
+grep -q "getElementById('osd_loading_message')" "$SRC/$BOOT_TPL" || fail "$BOOT_TPL ya no muestra osd_loading_message"
+grep -q '{{' "$LB_JS" && fail "$LB_JS no puede llevar llaves dobles (Handlebars)"
+install -d "$(dirname "$OUT/$BOOT_TPL")"
+cat "$LB_JS" "$SRC/$BOOT_TPL" > "$OUT/$BOOT_TPL"
+[[ $(grep -c '==== TripleSOC login boot ====' "$OUT/$BOOT_TPL") -eq 1 ]] || fail "arranque del portal no añadido a $BOOT_TPL"
 gzip -9 -n -c "$OUT/$CORE_JS" > "$OUT/$CORE_JS.gz"
 brotli -f -q 11 -o "$OUT/$CORE_JS.br" "$OUT/$CORE_JS"
 

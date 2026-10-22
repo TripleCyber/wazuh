@@ -150,14 +150,20 @@
     return root;
   }
 
+  // Arranque temprano: en /app/login, bootstrap.js carga este mismo archivo desde /ui/ (window.__tsocBoot)
+  // antes que la aplicación, así el portal sale enseguida en lugar de "Loading..." y del login nativo.
+  var noOidc = 0;
   function tick() {
     try {
       var el = document.getElementById('tsoc-login');
       if (!isLogin() || localMode()) { document.body.classList.remove('tsoc-login'); if (el) el.remove(); return; }
       var wrapper = document.querySelector('.login-wrapper');
-      if (!wrapper) return;
+      if (!wrapper && !window.__tsocBoot) return;
       // Solo si Logto está configurado (existe el botón nativo de OpenID); si no, login nativo intacto.
-      if (!document.querySelector('a[aria-label="openid_login_button"]')) return;
+      if (wrapper && !document.querySelector('a[aria-label="openid_login_button"]')) {
+        if (++noOidc < 5) return;
+        document.body.classList.remove('tsoc-login'); if (el) el.remove(); return;
+      }
       if (!el) {
         el = build();
         document.body.appendChild(el);
@@ -166,7 +172,7 @@
       }
       document.body.classList.add('tsoc-login');
       // El formulario nativo queda tapado y fuera del orden de tabulación (sin inert: deja la pestaña sin capturas).
-      tabbable(wrapper, false);
+      if (wrapper) tabbable(wrapper, false);
     } catch (err) { /* nunca romper la página de entrada */ }
   }
   setInterval(tick, 300);
