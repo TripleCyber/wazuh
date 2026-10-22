@@ -134,7 +134,7 @@ body { color: var(--tsoc-text); -webkit-font-smoothing: antialiased; }
 .euiPanel.login-wrapper, .login-wrapper .euiPanel {
   border-radius: 16px !important; box-shadow: 0 24px 64px rgba(0, 0, 0, .55) !important;
 }
-/* Portal de entrada "Cúpula · atardecer" (triplesoc-login.js añade #tsoc-login, capa fija con la tarjeta, y la clase
+/* Portal de entrada "Cúpula · noche" (triplesoc-login.js añade #tsoc-login, capa fija con la tarjeta, y la clase
    tsoc-login al body). Tarjeta blanca tipo ventana: escena fija en canvas a la izquierda (corte en diagonal) y acceso
    breve a la derecha. Paleta TripleCyber: carbón y neutros; verde y rojo solo como acentos, como en el logo.
    Sin animaciones. El login nativo queda debajo; /app/login#local lo muestra sin el portal. */
@@ -153,7 +153,7 @@ body.tsoc-login .login-wrapper { max-height: 0; overflow: hidden; opacity: .01; 
   box-shadow: 0 40px 80px -32px rgba(0, 0, 0, .28), 0 2px 6px rgba(0, 0, 0, .05);
 }
 .tsocPortal__scene {
-  position: relative; overflow: hidden; border-radius: 17px; background: #0b1424;
+  position: relative; overflow: hidden; border-radius: 17px; background: #05070b;
   clip-path: polygon(0 0, 100% 0, 91% 100%, 0 100%);
 }
 .tsocPortal__scene canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
@@ -186,13 +186,13 @@ body.tsoc-login .login-wrapper { max-height: 0; overflow: hidden; opacity: .01; 
 .tsocPortal__does i.is-red { background: #BB2227; }
 .tsocPortal__cta {
   display: inline-flex; align-items: center; justify-content: center; gap: 10px; width: 100%; max-width: 320px; height: 52px;
-  border-radius: 12px; background: #13843B; color: #fff !important; font: 600 16px/1 var(--tsoc-font);
-  text-decoration: none !important; white-space: nowrap; box-shadow: 0 14px 28px -14px rgba(19, 132, 59, .6);
+  border-radius: 12px; background: #161616; color: #fff !important; font: 600 16px/1 var(--tsoc-font);
+  text-decoration: none !important; white-space: nowrap; box-shadow: 0 14px 28px -14px rgba(0, 0, 0, .55);
   transition: background .15s;
 }
-.tsocPortal__cta svg { width: 18px; height: 18px; }
-.tsocPortal__cta:hover { background: #0F6E31; }
-.tsocPortal__cta:focus-visible { outline: 2px solid #161616; outline-offset: 3px; }
+.tsocPortal__cta svg { width: 18px; height: 18px; color: #1AA54A; }
+.tsocPortal__cta:hover { background: #262828; }
+.tsocPortal__cta:focus-visible { outline: 2px solid #1AA54A; outline-offset: 3px; }
 .tsocPortal__cta.is-busy { opacity: .85; pointer-events: none; }
 .tsocPortal__legal { margin: 24px 0 0; font: 400 11.5px/1.4 ui-monospace, "Cascadia Mono", Consolas, monospace; color: #8A8F8D; }
 @media (max-width: 820px) {

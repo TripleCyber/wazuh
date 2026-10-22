@@ -1,6 +1,6 @@
 /* ==== TripleSOC login ====
-   Portal de entrada "Cúpula · atardecer" (elegido por Vladimir; referencia: tarjeta tipo ventana con escena a la
-   izquierda y acceso breve). Tarjeta blanca centrada: a la izquierda, una ciudad al atardecer protegida por una
+   Portal de entrada "Cúpula · noche" (elegido por Vladimir; referencia: tarjeta tipo ventana con escena a la
+   izquierda y acceso breve). Tarjeta blanca centrada: a la izquierda, una ciudad de noche protegida por una
    cúpula (canvas, imagen FIJA: se dibuja una vez a la resolución real de la pantalla y con semilla fija, así se ve
    nítida y siempre igual); a la derecha, el logo oficial, "Hi Analyst", qué hace el sistema en tres palabras y un
    único botón "Sign in with TripleEnable" (Logto / OpenID).
@@ -43,7 +43,7 @@
     return (a && a.getAttribute('href')) || ('/auth/openid/captureUrlFragment' + location.search);
   }
 
-  // ---------------------------------------------------------------- cúpula al atardecer (canvas, imagen fija)
+  // ---------------------------------------------------------------- cúpula de noche (canvas, imagen fija)
   // Generador con semilla: la misma ciudad y las mismas estrellas en cada visita y al cambiar el tamaño.
   function seeded(seed) {
     return function () {
@@ -65,9 +65,9 @@
       c.width = Math.round(w * dpr); c.height = Math.round(h * dpr); x.setTransform(dpr, 0, 0, dpr, 0, 0);
       var r = seeded(20261022), rnd = function (a, b) { return a + r() * (b - a); };
 
-      // Cielo: azul pizarra que cae a un horizonte cálido.
+      // Cielo de noche en tonos neutros (azul noche a pizarra).
       var g = x.createLinearGradient(0, 0, 0, h);
-      g.addColorStop(0, '#0b1424'); g.addColorStop(.6, '#24324a'); g.addColorStop(1, '#6b5a55');
+      g.addColorStop(0, '#05070b'); g.addColorStop(.6, '#0b1018'); g.addColorStop(1, '#151c26');
       x.fillStyle = g; x.fillRect(0, 0, w, h);
       for (var i = 0; i < 140; i++) {
         var sy = r() * .5, big = r() < .08;
@@ -75,11 +75,11 @@
         x.beginPath(); x.arc(r() * w, sy * h, big ? rnd(1, 1.5) : rnd(.35, .8), 0, 6.283); x.fill();
       }
       var hz = x.createLinearGradient(0, h * .55, 0, h);
-      hz.addColorStop(0, 'rgba(230,170,120,0)'); hz.addColorStop(1, 'rgba(230,170,120,.18)');
+      hz.addColorStop(0, 'rgba(120,140,160,0)'); hz.addColorStop(1, 'rgba(120,140,160,.18)');
       x.fillStyle = hz; x.fillRect(0, h * .55, w, h * .45);
 
       // Cúpula plateada con su malla y una franja de escaneo verde (fija).
-      var cx = w * .45, cy = h * .98, R = Math.min(w * .62, h * .82), D = '225,230,236';
+      var cx = w * .45, cy = h * .98, R = Math.min(w * .62, h * .82), D = '205,215,225';
       var gl = x.createRadialGradient(cx, cy, R * .2, cx, cy, R * 1.05);
       gl.addColorStop(0, 'rgba(' + D + ',.06)'); gl.addColorStop(.92, 'rgba(' + D + ',.05)'); gl.addColorStop(1, 'rgba(' + D + ',0)');
       x.fillStyle = gl; x.beginPath(); x.arc(cx, cy, R * 1.05, Math.PI, 0); x.fill();
@@ -100,11 +100,11 @@
       var x0 = 0;
       while (x0 < 1) {
         var bw = rnd(.025, .06), bh = rnd(.12, .42) * (1 - Math.abs(x0 - .45) * .9), bx = x0 * w, bwp = bw * w, bhp = bh * h, by = h - bhp;
-        x.fillStyle = '#0a0d12'; x.fillRect(bx, by, bwp, bhp);
+        x.fillStyle = '#07090c'; x.fillRect(bx, by, bwp, bhp);
         for (var j = 0; j < 26; j++) {
           var on = r() < .5, warm = r() < .75, u = r(), v = r(), al = .5 + r() * .35;
           if (!on) continue;
-          x.fillStyle = (warm ? 'rgba(255,210,140,' : 'rgba(255,236,200,') + al + ')';
+          x.fillStyle = (warm ? 'rgba(255,214,150,' : 'rgba(235,238,240,') + al + ')';
           x.fillRect(Math.round(bx + 2 + u * (bwp - 5)), Math.round(by + 4 + v * (bhp - 8)), 1.6, 1.6);
         }
         if (bh > .3 && r() < .6) {
