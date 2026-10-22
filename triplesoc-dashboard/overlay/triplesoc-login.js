@@ -130,7 +130,6 @@
       '<div class="tsocPortal__card">' +
       '<div class="tsocPortal__scene">' +
       '<canvas aria-hidden="true"></canvas>' +
-      '<div class="tsocPortal__top"><small>Live</small></div>' +
       '<div class="tsocPortal__chip"><svg viewBox="0 0 64 64" aria-hidden="true">' + MARK + '</svg>' +
       '<div><b>Your whole organization</b><span>One shield over every device</span></div></div>' +
       '</div>' +

@@ -157,14 +157,6 @@ body.tsoc-login .login-wrapper { max-height: 0; overflow: hidden; opacity: .01; 
   clip-path: polygon(0 0, 100% 0, 91% 100%, 0 100%);
 }
 .tsocPortal__scene canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-.tsocPortal__top { position: absolute; top: 22px; right: 40px; color: #E9ECEB; }
-.tsocPortal__top small {
-  display: flex; align-items: center; gap: 8px; font: 500 11px/1 ui-monospace, "Cascadia Mono", Consolas, monospace;
-  letter-spacing: .14em; text-transform: uppercase; opacity: .85;
-}
-.tsocPortal__top small::before {
-  content: ""; width: 7px; height: 7px; border-radius: 50%; background: #1AA54A; box-shadow: 0 0 0 3px rgba(26, 165, 74, .25);
-}
 .tsocPortal__chip {
   position: absolute; left: 20px; bottom: 20px; display: flex; align-items: center; gap: 12px; padding: 10px 18px 10px 10px;
   border-radius: 14px; color: #F1F3F2; background: rgba(10, 12, 14, .5); border: 1px solid rgba(255, 255, 255, .14);
