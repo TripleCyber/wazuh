@@ -1,0 +1,29 @@
+server.host: 0.0.0.0
+server.port: 5601
+opensearch.hosts: https://wazuh-indexer:9200
+opensearch.ssl.verificationMode: certificate
+opensearch.requestHeadersWhitelist: ["securitytenant","Authorization"]
+opensearch_security.multitenancy.enabled: false
+opensearch_security.readonly_mode.roles: ["kibana_read_only"]
+# TLS lo pone el proxy de delante (Coolify/Traefik, Caddy, Nginx...). El dashboard escucha en HTTP dentro de la red.
+server.ssl.enabled: false
+opensearch.ssl.certificateAuthorities: ["/usr/share/wazuh-dashboard/certs/root-ca.pem"]
+uiSettings.overrides.defaultRoute: "/app/dashboards#/view/triplesoc-overview"
+# Session expiration settings
+opensearch_security.cookie.ttl: 900000
+opensearch_security.session.ttl: 900000
+opensearch_security.session.keepalive: true
+
+# ---------------------------------------------------------------------------------------------------------------
+# Login único con TripleEnable (Logto, OpenID Connect). El formulario de usuario/contraseña sigue de respaldo
+# (/app/login#local). Si no se usa Logto, borrar desde aquí hasta el final.
+# client_secret: lo entrega el administrador de Logto. Este archivo (sin .example) NO se sube a git.
+# ---------------------------------------------------------------------------------------------------------------
+opensearch_security.auth.multiple_auth_enabled: true
+opensearch_security.auth.type: ["basicauth", "openid"]
+opensearch_security.openid.connect_url: "https://auth.idp.tripleenable.com/oidc/.well-known/openid-configuration"
+opensearch_security.openid.client_id: "CAMBIAR-client-id"
+opensearch_security.openid.client_secret: "CAMBIAR-client-secret"
+opensearch_security.openid.base_redirect_url: "https://CAMBIAR-dominio-del-dashboard"
+opensearch_security.openid.scope: "openid profile email roles"
+opensearch_security.ui.openid.login.buttonname: "Sign in with TripleEnable"

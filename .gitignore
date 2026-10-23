@@ -7,3 +7,11 @@
 secret/
 triplesoc-manager/endpoints/agent-diagnostico.txt
 .schema/
+# deploy/: lo real (con secretos) se queda en la máquina; en git solo van las plantillas *.example
+deploy/certs/
+deploy/secrets/
+deploy/config/wazuh_indexer/internal_users.yml
+deploy/config/wazuh_dashboard/opensearch_dashboards.yml
+deploy/config/wazuh_dashboard/wazuh.yml
+deploy/config/wazuh_cluster/authd.pass
+!.env.example
