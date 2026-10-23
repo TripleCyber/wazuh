@@ -183,7 +183,7 @@ services:
       INDEXER_URL: 'https://wazuh-indexer:9200'
       INDEXER_USER: triplesoc_incidents
       MODE: approve
-      AI_PROVIDER: openai                         # API compatible con OpenAI (Groq); "anthropic" también vale
+      AI_PROVIDER: openai                         # API compatible con OpenAI (Groq): la usa también el chat del Guardian
       AI_BASE_URL: 'https://api.groq.com/openai/v1'
       AI_MODEL: openai/gpt-oss-120b
       MIN_RANK: '3'

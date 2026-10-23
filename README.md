@@ -31,7 +31,7 @@ servicios TripleSOC que corren al lado.
   ```
 - Puertos abiertos hacia los equipos con agente: **1514/tcp** (eventos) y **1515/tcp** (registro).
 - Un dominio y un **proxy con HTTPS** delante del dashboard (Coolify/Traefik, Caddy, Nginx...). El login con Logto no funciona sin HTTPS.
-- Para la IA del Responder y Rulesmith: una clave de API compatible con OpenAI (Groq por defecto) o de Anthropic. Sin clave, el Responder decide solo con su tabla fija y Rulesmith no redacta borradores.
+- Para la IA del Responder y Rulesmith: una clave de API compatible con OpenAI (Groq por defecto). Sin clave, el Responder decide solo con su tabla fija, Rulesmith no redacta borradores y el chat del Guardian no contesta. (El Responder y Rulesmith también admiten `AI_PROVIDER=anthropic`, pero el chat del Guardian solo usa la API compatible con OpenAI.)
 
 ---
 
