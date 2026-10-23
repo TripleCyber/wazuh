@@ -1,53 +1,44 @@
-# TripleSOC sobre Wazuh — estado y traspaso (26/09/2026)
+# Estado del entorno de desarrollo (23-10-2026)
 
-Entorno: Coolify → proyecto **Wazuh** → **dev** → servicio `wazuh-stack`.
-Dashboard: https://wazuh-dashboard.idp.tripleenable.com (usuario `admin`).
+Para instalar desde cero: [README.md](README.md). Historial: [CHANGELOG.md](CHANGELOG.md).
 
-## Asignaciones
+## Dónde corre
 
-| # | Asignación | Estado | Dónde verlo |
-|---|---|---|---|
-| 1 | Personalización de la interfaz + persistencia | ✅ Completa | Login y cualquier página del dashboard |
-| 2 | Índices `triplesoc-alerts-*` | ✅ Completa | Indexer management → Index Management (Indexes, Templates, State management policies); Threat Hunting |
-| 3 | Auditoría USB en endpoint | ⏸️ En pausa | Falta abrir TCP 1514/1515 en el NSG de Azure (VM crypto-dev-idp01, 20.65.219.193) |
-| 4 | Webhook de alertas nivel ≥ 12 | ✅ Completa (receptor interno) | Coolify → wazuh-stack → Runtime Logs → Triplesoc Webhook Receiver |
+- Coolify → proyecto **Wazuh** → entorno **dev** → servicio `wazuh-stack`.
+- Dashboard: https://wazuh-dashboard.idp.tripleenable.com (Sign in with TripleEnable; respaldo `/app/login#local`).
+- Copia de trabajo del código en el servidor: `/opt/triplesoc/src` (misma rama que GitHub `develop`).
 
-## Código fuente (aquí y en el servidor en /opt/triplesoc/)
+## Versiones desplegadas
 
-- `triplesoc-dashboard/` — imagen del dashboard con la capa visual (Dockerfile, apply-branding.sh, build.sh).
-- `triplesoc-manager/` — imagen del manager: prefijo de índices, integración de webhooks, reglas.
-- `triplesoc-indexer/setup.sh` — template, política de rotación, migración y purga verificada.
-- `triplesoc-webhook-receiver/` — receptor interno de prueba.
+| Servicio | Imagen | Notas |
+|---|---|---|
+| wazuh-indexer | `triplesoc/wazuh-indexer:4.14.7` | Oficial + etiqueta de Coolify |
+| wazuh-manager | `triplesoc/wazuh-manager:4.14.7` | Reglas, decoders, integración, Filebeat a `triplesoc-alerts-*` |
+| wazuh-dashboard | `triplesoc/wazuh-dashboard:fase2` | Construida con `triplesoc-dashboard/build.sh 4.14.7`; portal "Cúpula · noche" |
+| triplesoc-incidents | `triplesoc/incidents:1.1` | |
+| triplesoc-responder | `triplesoc/responder:0.17` | `MODE=approve`, IA por Groq |
+| triplesoc-rulesmith | `triplesoc/rulesmith:0.4` | `MODE=install` |
+| triplesoc-webhook-receiver | `triplesoc/webhook-receiver:1.0` | |
 
-## ¿Se pierden los cambios?
+Comprobación: `ops/upgrade-check.sh` en el servidor. Todo lo propio de TripleSOC sale OK; el 23-10 el resultado
+general es ROJO solo por el disco del indexer (86 %).
 
-- **Reinicio / deploy:** no. Todo está en imágenes propias (`pull_policy: never`), archivos gestionados por Coolify y volúmenes.
-- **Actualizar Wazuh:** no es automático. Procedimiento:
-  ```bash
-  cd /opt/triplesoc/triplesoc-dashboard && ./build.sh <versión>
-  cd /opt/triplesoc/triplesoc-manager   && ./build.sh <versión>
-  # cambiar los tags en el compose de Coolify, reiniciar (Force Restart si está Degraded)
-  cd /opt/triplesoc/triplesoc-indexer && ./setup.sh
-  ```
-  Si una versión nueva cambia algo por dentro, el build falla y avisa (no publica la marca original).
-- **No hacer:** "Run Docker Cleanup", `docker image prune -a`, cambiar las líneas `image:` a las oficiales.
-- **Si se borraron las imágenes:** `./build.sh 4.14.7` en triplesoc-dashboard y triplesoc-manager.
+## Qué vive fuera de git (a propósito)
 
-## Probar el webhook
+Contraseñas (`.env` de Coolify), `client_secret` de Logto (Files de `opensearch_dashboards.yml`), certificados,
+URL de Teams y claves de IA (`/opt/triplesoc/*-secrets`, `/opt/triplesoc/responder-teams`).
 
-```bash
-docker exec wazuh-manager-yf8u7icjiq4vdhetmea7rmfr sh -c 'echo "$(date "+%b %d %H:%M:%S") lab TRIPLESOC_INTEGRATION_TEST" >> /var/ossec/logs/active-responses.log'
-```
-Ver el mensaje en Runtime Logs del receptor (2–3 segundos).
+## Pendientes
 
-## Pendientes / sugerencias
-
-- Tarea 3 cuando abran el firewall (definir si los equipos son Windows, Linux o ambos).
-- Teams: crear Workflow "Post to a channel when a webhook request is received" y pegar la URL en `<hook_url>` de `wazuh_manager.conf` (Coolify → Persistent Storage → Wazuh Manager → Files).
-- Matices: textos "Wazuh" en datos; índices `wazuh-monitoring/statistics/states`.
-- Profesionalizar: repositorio Git, registry privado de imágenes, alargar sesión del dashboard (hoy 15 min).
+- Prueba real del acceso por rol: tsoc-admin con las pantallas de Wazuh y una cuenta sin rol ("Access not granted").
+- Disco del servidor al 86 %: ampliar o limpiar imágenes antiguas (al 90 % el indexer bloquea índices nuevos).
+- Pipelines y `main` como producción (propuesta de Fausto).
+- Instalación completa desde cero siguiendo solo el README, en una máquina limpia.
 
 ## Respaldos en el servidor
 
-`/root/backup-wazuh-20260925-194003` (estado original), `/opt/triplesoc/backup-20260925-214021`,
-`/opt/triplesoc/backup-20260925-233122-pipeline`, `/opt/triplesoc/backup-20260926-012619-integration`.
+- Imágenes anteriores del dashboard: `triplesoc/wazuh-dashboard:fase2-nolive-20261022`, `fase2-noche-live-20261022`,
+  `fase2-atardecer-20261022`, `fase2-aurora-20261022`, `fase2-escudo-20261022`, `fase2-backup-20261022`.
+- Volver atrás una imagen: `docker tag <respaldo> triplesoc/wazuh-dashboard:fase2` y
+  `docker compose --env-file .env -p <id> up -d --no-deps wazuh-dashboard` en `/data/coolify/services/<id>`.
+- Copias del compose y de la configuración: `/opt/triplesoc/backup-*`.
