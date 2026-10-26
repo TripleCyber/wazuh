@@ -139,7 +139,8 @@ services:
     restart: unless-stopped
     mem_limit: 64m
     healthcheck:
-      test: ['CMD-SHELL', 'wget -qO- http://127.0.0.1:8080/ >/dev/null || exit 1']
+      # La imagen no lleva shell ni wget (solo Python).
+      test: ['CMD', 'python', '-c', "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/', timeout=4)"]
       interval: 30s
       timeout: 5s
       retries: 3

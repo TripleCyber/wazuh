@@ -90,8 +90,16 @@ pct=$(int "$(q '_cat/allocation?h=disk.percent' | tr -d ' ' | head -1)")
 if   [ "$pct" -ge 85 ]; then fail "disco del indexer al ${pct} % (al 90 % bloquea índices nuevos y al 95 % pasa a solo lectura)"
 elif [ "$pct" -ge 80 ]; then warn "disco del indexer al ${pct} % (ampliar antes de actualizar versiones)"
 else ok "disco del indexer al ${pct} %"; fi
-blk=$(q '_cluster/state/blocks' | grep -o '"description":"[^"]*"' | cut -d'"' -f4 | tr '\n' ';')
-[ -z "$blk" ] && ok "sin bloqueos en el clúster" || fail "bloqueos en el clúster: $blk (revisar disco y quitar con _cluster/settings)"
+blk=$(q '_cluster/state/blocks?filter_path=blocks.global' | grep -o '"description":"[^"]*"' | cut -d'"' -f4 | tr '\n' ';')
+[ -z "$blk" ] && ok "sin bloqueos globales en el clúster" || fail "bloqueos en el clúster: $blk (revisar disco y quitar con _cluster/settings)"
+# La política triplesoc-alerts-rotation pasa a solo lectura (estado warm) los índices de alertas de más de 30 días:
+# ese bloqueo de escritura es el previsto. Falla si lo tiene el índice de hoy o cualquier otro índice.
+wb=$(q '_all/_settings/index.blocks.write?flat_settings=true' | grep -oE '"[^"]+":\{"settings":\{"index.blocks.write":"true"' | cut -d'"' -f2)
+today="triplesoc-alerts-$(date -u +%Y.%m.%d)"
+other=$(printf '%s\n' $wb | grep -vE '^triplesoc-alerts-[0-9]{4}\.[0-9]{2}\.[0-9]{2}$' | tr '\n' ' ')
+if printf '%s\n' $wb | grep -qx "$today"; then fail "el índice de hoy ($today) no admite escrituras"
+elif [ -n "$other" ]; then fail "índices con escritura bloqueada: $other"
+else ok "índices aceptan escrituras ($(printf '%s\n' $wb | grep -c .) de alertas antiguos en solo lectura por la retención de 30 días)"; fi
 ro=$(q '_all/_settings/index.blocks.read_only_allow_delete?flat_settings=true' | grep -c '"true"')
 [ "${ro:-0}" -eq 0 ] && ok "ningún índice en solo lectura" || fail "$ro índices en solo lectura por disco"
 
@@ -149,9 +157,10 @@ for c in triplesoc-responder triplesoc-incidents triplesoc-rulesmith; do
   tb=$(docker logs --since 30m "$c-$SID" 2>&1 | grep -c 'Traceback')
   [ "${tb:-0}" -eq 0 ] && ok "$c sin errores en 30 min" || fail "$c: $tb Traceback en 30 min"
 done
-docker exec "triplesoc-responder-$SID" grep -q 'def prompt_injection' /app/responder.py 2>/dev/null \
+# Las imágenes de los servicios no llevan shell (solo Python): las comprobaciones dentro se hacen con python -c.
+docker exec "triplesoc-responder-$SID" python -c "import sys; sys.exit('def prompt_injection' not in open('/app/responder.py').read())" 2>/dev/null \
   && ok "Responder con guardarraíles de IA (inyección + techo de severidad)" || fail "Responder sin guardarraíles de IA"
-docker exec "triplesoc-webhook-receiver-$SID" wget -qO- http://127.0.0.1:8080/ >/dev/null 2>&1 \
+docker exec "triplesoc-webhook-receiver-$SID" python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/', timeout=4)" >/dev/null 2>&1 \
   && ok "receptor de webhooks responde" || fail "receptor de webhooks no responde"
 
 # ------------------------------------------------------------------ 7b. capa traductora (fase 2)
@@ -161,7 +170,7 @@ SCHEMA_SRC=${SCHEMA_SRC:-$(cd "$(dirname "$0")/.." && pwd)/schema/triplesoc-sche
 if [ -f "$SCHEMA_SRC" ]; then
   want=$(md5sum < "$SCHEMA_SRC" | cut -c1-32)
   for c in triplesoc-responder triplesoc-incidents triplesoc-rulesmith; do
-    got=$(docker exec "$c-$SID" md5sum /app/triplesoc-schema.json 2>/dev/null | cut -c1-32)
+    got=$(docker exec "$c-$SID" python -c 'import hashlib; print(hashlib.md5(open("/app/triplesoc-schema.json", "rb").read()).hexdigest())' 2>/dev/null | cut -c1-32)
     imp=$(docker exec "$c-$SID" python -c 'import sys; sys.path.insert(0, "/app"); import tsoc_schema as T; print(T.ADAPTER)' 2>/dev/null | tr -d '\r')
     if [ "$got" = "$want" ] && [ -n "$imp" ]; then ok "$c usa el contrato del repositorio (adaptador $imp)"
     elif [ -z "$got" ]; then fail "$c no tiene la capa traductora (/app/triplesoc-schema.json)"

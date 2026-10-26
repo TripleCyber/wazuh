@@ -15,7 +15,7 @@ docker exec -i triplesoc-responder-$S python - < /opt/triplesoc/src/ops/golden/s
 # modo tabla fija: sin red ni IA
 docker run --rm --network none -v /opt/triplesoc/src:/src:ro -v $D:/g triplesoc/responder:0.16 python /src/ops/golden/eval-golden.py /g
 # modo IA: una llamada por incidente alto o crítico (pocas decenas)
-docker exec triplesoc-responder-$S mkdir -p /tmp/g/src && docker cp /opt/triplesoc/src/. triplesoc-responder-$S:/tmp/g/src \
+docker exec triplesoc-responder-$S python -c "import os; os.makedirs('/tmp/g/src', exist_ok=True)" && docker cp /opt/triplesoc/src/. triplesoc-responder-$S:/tmp/g/src \
   && docker cp $D/sample.jsonl triplesoc-responder-$S:/tmp/g/ \
   && docker exec -e AI=1 -e TSOC_SRC=/tmp/g/src triplesoc-responder-$S python /tmp/g/src/ops/golden/eval-golden.py /tmp/g \
   && docker cp triplesoc-responder-$S:/tmp/g/report-ia.md $D/ && docker cp triplesoc-responder-$S:/tmp/g/report-ia.json $D/
