@@ -2,6 +2,19 @@
 
 Historial de TripleSOC por fecha. El detalle de cada cambio está en `git log`.
 
+## 2026-10-26 — Servicios propios sin componentes GPL
+
+- **Imagen mínima** para incidents 1.2, responder 0.18, rulesmith 0.5, webhook-receiver 1.1 y BFF 0.2
+  (`triplesoc-base/slim-rootfs.sh`): parte de `scratch` con el mismo Python 3.12 de Alpine, sin BusyBox ni apk-tools
+  (GPL-2.0) y sin los módulos readline, gdbm, dbm y nis. 58 MB en lugar de 74-143 MB.
+- Cada imagen lleva `/usr/share/triplesoc/librerias-sistema.txt` (librería, paquete y licencia); la construcción
+  falla si entra una librería GPL.
+- Healthchecks en Python (la imagen no tiene shell). El SDK de Anthropic del Responder es opcional
+  (`--build-arg WITH_ANTHROPIC=1`); con Groq no hace falta.
+- `upgrade-check.sh`: las comprobaciones dentro de los contenedores usan Python, y distingue los índices de alertas de
+  más de 30 días (la política ISM los deja en solo lectura a propósito) de un bloqueo real.
+- Desplegado y verificado en dev: canario VERDE (set de oro 99,88 %) y `upgrade-check` VERDE.
+
 ## 2026-10-22 — Portal de entrada, acceso por rol y despliegue documentado
 
 - **Portal "Cúpula · noche"** (elegido por Vladimir): tarjeta con ciudad protegida por una cúpula (imagen fija y nítida),

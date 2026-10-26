@@ -1,4 +1,4 @@
-# Estado del entorno de desarrollo (23-10-2026)
+# Estado del entorno de desarrollo (26-10-2026)
 
 Para instalar desde cero: [README.md](README.md). Historial: [CHANGELOG.md](CHANGELOG.md).
 
@@ -15,13 +15,16 @@ Para instalar desde cero: [README.md](README.md). Historial: [CHANGELOG.md](CHAN
 | wazuh-indexer | `triplesoc/wazuh-indexer:4.14.7` | Oficial + etiqueta de Coolify |
 | wazuh-manager | `triplesoc/wazuh-manager:4.14.7` | Reglas, decoders, integración, Filebeat a `triplesoc-alerts-*` |
 | wazuh-dashboard | `triplesoc/wazuh-dashboard:fase2` | Construida con `triplesoc-dashboard/build.sh 4.14.7`; portal "Cúpula · noche" |
-| triplesoc-incidents | `triplesoc/incidents:1.1` | |
-| triplesoc-responder | `triplesoc/responder:0.17` | `MODE=approve`, IA por Groq |
-| triplesoc-rulesmith | `triplesoc/rulesmith:0.4` | `MODE=install` |
-| triplesoc-webhook-receiver | `triplesoc/webhook-receiver:1.0` | |
+| triplesoc-incidents | `triplesoc/incidents:1.2` | Imagen mínima (scratch, sin BusyBox ni apk) |
+| triplesoc-responder | `triplesoc/responder:0.18` | `MODE=approve`, IA por Groq; imagen mínima |
+| triplesoc-rulesmith | `triplesoc/rulesmith:0.5` | `MODE=install`; imagen mínima |
+| triplesoc-webhook-receiver | `triplesoc/webhook-receiver:1.1` | Imagen mínima |
 
-Comprobación: `ops/upgrade-check.sh` en el servidor. Todo lo propio de TripleSOC sale OK; el 23-10 el resultado
-general es ROJO solo por el disco del indexer (86 %).
+Comprobación: `ops/upgrade-check.sh` en el servidor. El 26-10 sale VERDE (60 OK y un aviso: disco al 81 %).
+
+Coolify 4.5.0 reescribe el compose entero al guardar en "Edit Compose File" (añade variables `COOLIFY_*`, monta en
+solo lectura los bind mounts marcados `:ro` y cambia las etiquetas de Traefik del panel). El indexer, el manager y el
+panel tomarán ese formato en su próximo reinicio.
 
 ## Qué vive fuera de git (a propósito)
 
@@ -31,7 +34,7 @@ URL de Teams y claves de IA (`/opt/triplesoc/*-secrets`, `/opt/triplesoc/respond
 ## Pendientes
 
 - Prueba real del acceso por rol: tsoc-admin con las pantallas de Wazuh y una cuenta sin rol ("Access not granted").
-- Disco del servidor al 86 %: ampliar o limpiar imágenes antiguas (al 90 % el indexer bloquea índices nuevos).
+- Disco del servidor al 81 %: ampliar o limpiar imágenes antiguas (al 90 % el indexer bloquea índices nuevos).
 - Pipelines y `main` como producción (propuesta de Fausto).
 - Instalación completa desde cero siguiendo solo el README, en una máquina limpia.
 

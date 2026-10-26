@@ -17,6 +17,6 @@ S=yf8u7icjiq4vdhetmea7rmfr; mkdir -p /opt/triplesoc/triplesoc-bff/secret && chmo
 chown -R 10001 /opt/triplesoc/triplesoc-bff/secret
 docker run -d --name triplesoc-bff-proto --network $S --memory 128m \
   -v /opt/triplesoc/triplesoc-incidents/secret:/run/triplesoc:ro -v /data/coolify/services/$S/certs:/certs:ro \
-  -v /opt/triplesoc/triplesoc-bff/secret:/run/triplesoc-bff:ro triplesoc/bff:0.1
+  -v /opt/triplesoc/triplesoc-bff/secret:/run/triplesoc-bff:ro triplesoc/bff:0.2
 ```
 Para producción falta decidir: publicarlo con Traefik (dominio y lista de IP), un token por cliente o SSO, y añadirlo al compose de Coolify.
