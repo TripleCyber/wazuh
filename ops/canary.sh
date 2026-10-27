@@ -4,7 +4,7 @@
 #   ./canary.sh                      → las imágenes del compose actual (línea base)
 #   MGR=triplesoc/wazuh-manager:4.14.8 DSH=triplesoc/wazuh-dashboard:4.14.8 ./canary.sh   → candidatas
 # Comprueba: 1) motor (analysisd -t + logtest de canary/logtest-cases.txt: nuestras reglas siguen saltando),
-# 2) dashboard (capa traductora, 7 módulos, sintaxis del bundle), 3) servicios (set de oro de la capa,
+# 2) dashboard (capa traductora, 8 módulos, sintaxis del bundle), 3) servicios (set de oro de la capa,
 # guardarraíles de IA) y 4) el set de oro de decisiones: recall de contención 100 % y 0 benignas escaladas.
 # Salida VERDE (exit 0) / ROJO (exit 1). Informe en /opt/triplesoc/canary/<fecha-hora>/.
 SID=${SID:-yf8u7icjiq4vdhetmea7rmfr}
@@ -64,7 +64,7 @@ sec "2. Dashboard ($DSH)"
 docker run --rm --network none -v "$SRC":/src:ro --entrypoint /usr/share/wazuh-dashboard/node/bin/node "$DSH" /src/ops/schema-test.js \
   | grep -q 'RESULTADO: VERDE' && ok "capa traductora (set de oro JS)" || fail "capa traductora del dashboard"
 n=$(docker run --rm --network none --entrypoint sh "$DSH" -c 'grep -o "==== TripleSOC [a-z]* ====" /usr/share/wazuh-dashboard/src/core/target/public/core.entry.js | wc -l')
-[ "$n" = 7 ] && ok "7 módulos TripleSOC en el bundle" || fail "módulos en el bundle: $n (esperados 7)"
+[ "$n" = 8 ] && ok "8 módulos TripleSOC en el bundle" || fail "módulos en el bundle: $n (esperados 8)"
 docker run --rm --network none --entrypoint sh "$DSH" -c '/usr/share/wazuh-dashboard/node/bin/node --check /usr/share/wazuh-dashboard/src/core/target/public/core.entry.js' \
   && ok "sintaxis del bundle" || fail "el bundle tiene errores de sintaxis"
 

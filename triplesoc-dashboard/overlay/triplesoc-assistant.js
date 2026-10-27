@@ -35,21 +35,23 @@
       say: 'Aquí agrupo las alertas sueltas en incidentes, como un detective que une pistas. Cada uno trae una puntuación de riesgo y mi recomendación de qué hacer.' },
     { id: 'rules', re: /view\/triplesoc-rules/, name: 'AI Rules',
       say: 'Esta es mi fábrica de reglas. Me describes en palabras lo que quieres vigilar y yo escribo la regla, la valido y la pruebo en silencio antes de activarla.' },
-    { id: 'hunting', re: /^\/app\/threat-hunting/, name: 'Analytics',
+    { id: 'hunting', re: /^\/app\/data-explorer\/discover(?!.*rule\.level)/, name: 'Analytics',
       say: 'Aquí puedes investigar cada evento con detalle: qué pasó, en qué equipo y a qué hora. Es la lupa del analista.' },
-    { id: 'mitre', re: /^\/app\/mitre-attack/, name: 'Attack Map',
+    { id: 'mitre', re: /view\/triplesoc-attack/, name: 'Attack Map',
       say: 'Este es el mapa de técnicas de ataque de MITRE, el estándar mundial. Te muestra qué tipo de ataques hemos visto y en qué fase del ataque estaban.' },
-    { id: 'endpoints', re: /^\/app\/endpoints-summary/, name: 'Entities',
+    { id: 'endpoints', re: /view\/triplesoc-entities/, name: 'Entities',
       say: 'Estos son los equipos que protejo. Cada uno tiene un agente que me cuenta lo que pasa en él.' },
-    { id: 'groups', re: /^\/app\/endpoint-groups/, name: 'Trust Zones',
+    { id: 'groups', re: /view\/triplesoc-zones/, name: 'Trust Zones',
       say: 'Aquí se organizan los equipos en grupos, para aplicar a cada uno la vigilancia que necesita.' },
-    { id: 'apis', re: /^\/app\/server-apis/, name: 'APIs',
-      say: 'Esta es la conexión técnica con el cerebro de Wazuh. Normalmente solo la usa el equipo técnico.' }
+    { id: 'apis', re: /view\/triplesoc-platform/, name: 'APIs',
+      say: 'Aquí ves si mi conexión con el motor de detección funciona y lo recientes que son los datos que recibo. Si algo está en rojo, avisa al equipo técnico.' }
   ];
   var ROUTES = {
     open_incidents: '/app/dashboards#/view/triplesoc-incidents', open_ai_rules: '/app/dashboards#/view/triplesoc-rules',
     open_guardian: '/app/dashboards#/view/triplesoc-guardian', open_overview: '/app/dashboards#/view/triplesoc-overview',
-    open_threat_hunting: '/app/threat-hunting', open_endpoints: '/app/endpoints-summary'
+    open_threat_hunting: window.TSOC_SCHEMA ? "/app/data-explorer/discover#?_a=(discover:(columns:!(" + window.TSOC_SCHEMA.columns.join(',') +
+      "),isDirty:!f,sort:!()),metadata:(indexPattern:'" + window.TSOC_SCHEMA.idx.alerts + "',view:discover))&_g=(time:(from:now-24h,to:now))" : '/app/data-explorer/discover',
+    open_endpoints: '/app/dashboards#/view/triplesoc-entities'
   };
   var LABELS = { open_incidents: 'Ver incidentes', open_ai_rules: 'Ver reglas de IA', open_guardian: 'Abrir mi centro de mando',
     open_overview: 'Ver resumen', open_threat_hunting: 'Investigar eventos', open_endpoints: 'Ver equipos',

@@ -1054,6 +1054,93 @@ def chat_loop():
         time.sleep(CHAT_POLL_SEC)
 
 
+# ------------------------------------------------------------------ inventario de equipos
+# Copia en el indexer los equipos protegidos y su estado (API de Wazuh, la misma lectura de agentes que ya usa
+# el servicio). Lo leen las pantallas Entities, Trust Zones y APIs y las tarjetas de equipos del Overview, sin
+# depender del plugin de Wazuh del dashboard. Los grupos salen de los propios agentes.
+AGENTS_INDEX = os.environ.get("AGENTS_INDEX", "triplesoc-incidents-agents")
+INVENTORY_SEC = int(os.environ.get("INVENTORY_SEC", "300"))
+AGENT_SELECT = "id,name,ip,registerIP,status,os.name,os.platform,os.version,version,group,lastKeepAlive,dateAdd,node_name"
+AGENTS_MAPPING = {"settings": {"number_of_shards": 1, "number_of_replicas": 0},
+                  "mappings": {"dynamic": False, "properties": {
+                      "kind": {"type": "keyword"}, "id": {"type": "keyword"}, "name": {"type": "keyword"},
+                      "ip": {"type": "keyword"}, "register_ip": {"type": "keyword"}, "status": {"type": "keyword"},
+                      "os_name": {"type": "keyword"}, "os_platform": {"type": "keyword"}, "os_version": {"type": "keyword"},
+                      "version": {"type": "keyword"}, "groups": {"type": "keyword"}, "node": {"type": "keyword"},
+                      "last_keepalive": {"type": "date"}, "date_add": {"type": "date"}, "updated_at": {"type": "date"},
+                      "api": {"type": "keyword"}, "error": {"type": "keyword"}, "manager_version": {"type": "keyword"},
+                      "agents_total": {"type": "integer"}, "api_ms": {"type": "integer"}}}}
+
+
+def _date(v):
+    # La API usa "9999-12-31T23:59:59Z" (manager) o nada (nunca conectado): fuera de rango para el índice.
+    return v if v and not str(v).startswith("9999") else None
+
+
+def inventory_once():
+    t0 = time.time()
+    token = wazuh_token()
+    items, offset = [], 0
+    while True:
+        d = wazuh("GET", f"/agents?limit=500&offset={offset}&select={AGENT_SELECT}", token)["data"]
+        items += d["affected_items"]
+        offset += 500
+        if offset >= d["total_affected_items"]:
+            break
+    if not items:  # siempre está el 000 (el manager): una lista vacía es un error, no se borra nada
+        raise RuntimeError("la API devolvió 0 agentes")
+    at, lines, mgr = now_iso(), [], ""
+    for a in items:
+        os_ = a.get("os") or {}
+        if a["id"] == "000":
+            mgr = a.get("version", "")
+        lines.append(json.dumps({"index": {"_index": AGENTS_INDEX, "_id": f"agent-{a['id']}"}}))
+        lines.append(json.dumps({
+            "kind": "agent", "id": a["id"], "name": a.get("name"), "ip": a.get("ip"), "register_ip": a.get("registerIP"),
+            "status": a.get("status"), "os_name": os_.get("name"), "os_platform": os_.get("platform"),
+            "os_version": os_.get("version"), "version": a.get("version"), "groups": a.get("group") or [],
+            "node": a.get("node_name"), "last_keepalive": _date(a.get("lastKeepAlive")),
+            "date_add": _date(a.get("dateAdd")), "updated_at": at}))
+    lines.append(json.dumps({"index": {"_index": AGENTS_INDEX, "_id": "platform"}}))
+    lines.append(json.dumps({"kind": "platform", "api": "ok", "error": None, "manager_version": mgr,
+                             "agents_total": len(items), "api_ms": int((time.time() - t0) * 1000), "updated_at": at}))
+    res = req("POST", "/_bulk?refresh=true", "\n".join(lines) + "\n", ndjson=True)
+    if res.get("errors"):
+        bad = next(i for i in res["items"] if i["index"].get("error"))
+        raise RuntimeError(f"bulk con errores: {str(bad['index']['error'])[:160]}")
+    # Equipos dados de baja en Wazuh: los que esta pasada no ha reescrito.
+    req("POST", f"/{AGENTS_INDEX}/_delete_by_query?refresh=true", {"query": {"bool": {"filter": [
+        {"term": {"kind": "agent"}}, {"range": {"updated_at": {"lt": at}}}]}}})
+    return len(items)
+
+
+def inventory_loop():
+    try:
+        req("PUT", f"/{AGENTS_INDEX}", AGENTS_MAPPING)
+        log(f"índice {AGENTS_INDEX} creado")
+    except RuntimeError as e:
+        if "resource_already_exists_exception" not in str(e):
+            log(f"AVISO: no se pudo crear {AGENTS_INDEX} ({str(e)[:120]})")
+    last_err = None
+    while True:
+        try:
+            n = inventory_once()
+            if last_err:
+                log(f"inventario de equipos recuperado ({n} equipos)")
+            last_err = None
+        except Exception as e:
+            err = f"{type(e).__name__} {getattr(e, 'code', '')}".strip()
+            if err != last_err:
+                log(f"AVISO: inventario de equipos: {err}")
+            last_err = err
+            try:  # la pantalla APIs enseña que la conexión con el manager falla; los equipos se quedan como estaban
+                req("POST", f"/{AGENTS_INDEX}/_update/platform", {"doc": {"kind": "platform", "api": "error", "error": err,
+                    "updated_at": now_iso()}, "doc_as_upsert": True})
+            except Exception:
+                pass
+        time.sleep(INVENTORY_SEC)
+
+
 # ------------------------------------------------------------------ carril rápido (reflejo)
 # El ciclo normal espera a que triplesoc-incidents agrupe las alertas (decenas de segundos). Para las
 # señales que no admiten espera, este hilo lee el archivo de alertas del manager según se escribe y
@@ -1503,6 +1590,8 @@ def main():
             time.sleep(15)
     if not DRY_RUN:
         threading.Thread(target=chat_loop, name="guardian-chat", daemon=True).start()
+        if INVENTORY_SEC > 0 and os.path.exists(WAZUH_API_PASSWORD_FILE):
+            threading.Thread(target=inventory_loop, name="inventory", daemon=True).start()
         if REFLEX:
             threading.Thread(target=reflex_support_loop, name="reflex-support", daemon=True).start()
             threading.Thread(target=reflex_loop, name="reflex", daemon=True).start()

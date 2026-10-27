@@ -1047,3 +1047,25 @@ body.euiBody--hasFlyout[style*="padding-left: 320px"] { padding-left: 248px !imp
 .tsocGd--safe { --gd: #10B981; --gd-soft: rgba(16, 185, 129, .18); }
 .tsocCc__status--safe { color: #34D399; }
 .tsocCc__status--safe i { background: #10B981; box-shadow: 0 0 10px #10B981; }
+
+/* Entities, Trust Zones, Attack Map y APIs (triplesoc-endpoints-ui.js): reutilizan la base de Incidents. */
+.tsocEp__st { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.tsocEp__st--active { background: rgba(34, 197, 94, .14); color: #86EFAC; }
+.tsocEp__st--disconnected { background: rgba(229, 72, 77, .14); color: #FCA5A5; }
+.tsocEp__st--pending, .tsocEp__st--never_connected { background: rgba(245, 158, 11, .14); color: #FCD34D; }
+.tsocEp__foot { margin-top: 10px; }
+.tsocEp__h3 { margin: 16px 18px 8px; font: 600 14px/1.3 var(--tsoc-font); color: #fff; }
+.tsocEp__zones { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+.tsocEp__zone { padding: 16px 18px; }
+.tsocEp__zoneHead { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.tsocEp__zoneHead h2 { margin: 0; font: 600 16px/1.3 var(--tsoc-font); color: #fff; overflow-wrap: anywhere; }
+.tsocEp__zoneStats { margin: 10px 0; font-size: 13px; }
+.tsocEp__members { margin: 0; padding: 0; list-style: none; font-size: 13px; }
+.tsocEp__members li { padding: 3px 0; border-top: 1px solid var(--tsoc-border); }
+.tsocEp__members a { color: #E5E5E5; }
+.tsocEp__tactics { display: grid; grid-template-columns: repeat(auto-fit, minmax(76px, 1fr)); gap: 8px; padding: 0 18px 18px; }
+.tsocEp__tactic { display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; color: #6B6B6B; font-size: 11px; }
+.tsocEp__tactic.is-on { color: #D4D4D4; }
+.tsocEp__tactic b { font-size: 14px; color: inherit; }
+.tsocEp__bar { position: relative; width: 100%; height: 72px; border-radius: 6px; background: #222; overflow: hidden; }
+.tsocEp__bar i { position: absolute; left: 0; right: 0; bottom: 0; background: linear-gradient(180deg, #E5484D, #8B5CF6); }

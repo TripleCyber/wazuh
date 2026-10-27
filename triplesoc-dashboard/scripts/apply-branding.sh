@@ -183,6 +183,16 @@ printf '\n' >> "$OUT/$CORE_JS"
 cat "$GD_JS" >> "$OUT/$CORE_JS"
 [[ $(grep -c '==== TripleSOC guardian ====' "$OUT/$CORE_JS") -eq 1 ]] || fail "pantalla Guardian no añadida a $CORE_JS"
 
+# ---------------------------------------------------------------- 4f'. Entities, Trust Zones, Attack Map y APIs
+# Sustituyen a las pantallas del plugin de Wazuh (que la imagen ya no lleva). Los equipos los copia
+# triplesoc-responder al índice triplesoc-incidents-agents; MITRE sale de las propias alertas.
+log "Pantallas Entities, Trust Zones, Attack Map y APIs"
+EP_JS=$OVERLAY/triplesoc-endpoints-ui.js
+[[ -f "$EP_JS" ]] || fail "no existe $EP_JS"
+printf '\n' >> "$OUT/$CORE_JS"
+cat "$EP_JS" >> "$OUT/$CORE_JS"
+[[ $(grep -c '==== TripleSOC endpoints ====' "$OUT/$CORE_JS") -eq 1 ]] || fail "pantallas de equipos no añadidas a $CORE_JS"
+
 # ---------------------------------------------------------------- 4g. asistente Guardian (todas las pantallas)
 # Robot flotante que se presenta en cada sección y conversa (lo contesta triplesoc-responder).
 log "Asistente Guardian"

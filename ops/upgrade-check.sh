@@ -142,14 +142,16 @@ sec "Dashboard y marca TripleSOC"
 code=$(docker exec "$DSH" curl -sk -o /dev/null -w '%{http_code}' --max-time 15 http://localhost:5601/app/login 2>/dev/null)
 [ "$code" = "200" ] && ok "dashboard responde (HTTP 200)" || fail "dashboard responde HTTP ${code:-nada}"
 J=/usr/share/wazuh-dashboard/src/core/target/public/core.entry.js
-for m in schema nav incidents rules guardian assistant login; do
+for m in schema nav incidents rules guardian endpoints assistant login; do
   n=$(docker exec "$DSH" grep -c "==== TripleSOC $m ====" "$J" 2>/dev/null)
   [ "${n:-0}" -eq 1 ] && ok "módulo TripleSOC $m en el bundle" || fail "módulo TripleSOC $m: ${n:-0} copias (esperada 1)"
 done
 docker exec "$DSH" grep -q 'TripleSOC visual layer' /usr/share/wazuh-dashboard/src/core/server/core_app/assets/wz_v7_theme_overwrite.css 2>/dev/null \
   && ok "capa visual (CSS) aplicada" || fail "capa visual (CSS) no aplicada"
-docker exec "$DSH" grep -q 'triplesoc-alerts-' /usr/share/wazuh-dashboard/data/wazuh/config/wazuh.yml 2>/dev/null \
-  && ok "wazuh.yml apunta a triplesoc-alerts-*" || fail "wazuh.yml no apunta a triplesoc-alerts-*"
+# Las pantallas del plugin de Wazuh (GPL-2.0) las sustituyen las de TripleSOC: la imagen no debe llevarlo.
+if docker exec "$DSH" sh -c 'ls -d /usr/share/wazuh-dashboard/plugins/wazuh*' >/dev/null 2>&1; then
+  warn "el dashboard lleva los plugins de Wazuh (GPL-2.0): imagen anterior a la de sin plugins"
+else ok "dashboard sin los plugins de Wazuh (GPL-2.0)"; fi
 
 # ------------------------------------------------------------------ 7. servicios propios
 sec "Servicios TripleSOC (Responder, Incidents, Rulesmith, receptor)"
@@ -162,6 +164,13 @@ docker exec "triplesoc-responder-$SID" python -c "import sys; sys.exit('def prom
   && ok "Responder con guardarraíles de IA (inyección + techo de severidad)" || fail "Responder sin guardarraíles de IA"
 docker exec "triplesoc-webhook-receiver-$SID" python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/', timeout=4)" >/dev/null 2>&1 \
   && ok "receptor de webhooks responde" || fail "receptor de webhooks no responde"
+# Inventario de equipos (Entities, Trust Zones, APIs, tarjetas del Overview): el Responder lo copia cada 5 min.
+inv=$(q 'triplesoc-incidents-agents/_count' -H 'Content-Type: application/json' \
+  -d '{"query":{"bool":{"filter":[{"term":{"kind":"platform"}},{"term":{"api":"ok"}},{"range":{"updated_at":{"gte":"now-15m"}}}]}}}' \
+  | grep -oE '"count":[0-9]+' | cut -d: -f2)
+if [ "$(int "$inv")" -eq 1 ]; then ok "inventario de equipos al día (API de Wazuh → triplesoc-incidents-agents)"
+elif q 'triplesoc-incidents-agents' | grep -q '"triplesoc-incidents-agents"'; then fail "inventario de equipos sin actualizar en 15 min o con error de la API"
+else warn "aún no existe el inventario de equipos (Responder anterior a 0.20)"; fi
 
 # ------------------------------------------------------------------ 7b. capa traductora (fase 2)
 # Todos los consumidores leen índice y campos del mismo contrato (schema/triplesoc-schema.json).

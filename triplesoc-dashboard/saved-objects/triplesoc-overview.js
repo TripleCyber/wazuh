@@ -10,7 +10,7 @@
   const TS = window.TSOC_SCHEMA;
   if (!TS) throw new Error('Falta la capa traductora TripleSOC (window.TSOC_SCHEMA): ¿dashboard sin la imagen TripleSOC?');
   const ALERTS = TS.idx.alerts;
-  const MONITORING = TS.idx.monitoring;
+  const AGENTS = 'triplesoc-incidents-agents';
   const C = { red: '#BB2227', green: '#1AA54A', blue: '#3B82F6', purple: '#8B5CF6', amber: '#D97706', gray: '#6B7280' };
   const AUDIT = `${TS.f.rule_groups}:(syscheck or policy_changed or account_changed or audit or authentication_success or authentication_failed or authentication_failures)`;
   const Q = {
@@ -53,11 +53,13 @@
       series('% of all events', color, [{ id: uid(), type: 'filter_ratio', numerator: kq(query), denominator: kq('*'), metric_agg: 'count' }], '', { formatter: 'percent' }),
     ],
   });
-  // Tarjeta de agentes: último corte de wazuh-monitoring (cada 15 min).
+  // Tarjeta de agentes: inventario que triplesoc-responder copia de la API de Wazuh cada 5 min (un documento por
+  // equipo, sin el 000 del manager). Sustituye a wazuh-monitoring, que escribía el plugin de Wazuh del dashboard.
   const agents = (id, title, query, color) => tsvb(id, title, {
-    // ignore_global_filter: los filtros del tablero (nivel, agente) son de alertas, no de wazuh-monitoring.
-    type: 'metric', index_pattern: MONITORING, time_range_mode: 'last_value', interval: '15m', drop_last_bucket: 1, ignore_global_filter: 1,
-    series: [series(title, color, [{ id: uid(), type: 'cardinality', field: 'id' }], query)],
+    // ignore_global_filter: los filtros del tablero (nivel, agente) son de alertas, no del inventario.
+    type: 'metric', index_pattern: AGENTS, time_field: 'updated_at', time_range_mode: 'entire_time_range', ignore_global_filter: 1,
+    series: [series(title, color, [{ id: uid(), type: 'cardinality', field: 'id' }],
+      `kind:agent and not id:"000"${query ? ` and ${query}` : ''}`)],
   });
   const events = (id, title, query, color) => tsvb(id, title, {
     type: 'metric', time_range_mode: 'entire_time_range',

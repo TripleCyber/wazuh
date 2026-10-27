@@ -40,13 +40,13 @@
     { group: 'Investigar' },
     { label: 'Incidents', icon: 'siren', tone: 'red', does: 'Ataques agrupados y qué hacer con cada uno', href: '/app/dashboards#/view/triplesoc-incidents', match: /^\/app\/dashboards.*view\/triplesoc-incidents/, badge: 'incidents' },
     { label: 'Alerts', icon: 'bell', tone: 'amber', does: 'Alertas graves de las últimas 24 h', href: alerts(TS.kql.critical), match: qre(TS.kql.critical), badge: 'alerts' },
-    { label: 'Analytics', icon: 'chart', tone: 'cyan', does: 'Buscar y revisar cada evento', href: '/app/threat-hunting', match: /^\/app\/threat-hunting/ },
-    { label: 'Attack Map', icon: 'globe', tone: 'violet', does: 'Técnicas de ataque vistas (MITRE)', href: '/app/mitre-attack', match: /^\/app\/mitre-attack/ },
+    { label: 'Analytics', icon: 'chart', tone: 'cyan', does: 'Buscar y revisar cada evento', href: alerts(''), match: /^\/app\/data-explorer\/discover(?!.*rule\.level)/ },
+    { label: 'Attack Map', icon: 'globe', tone: 'violet', does: 'Técnicas de ataque vistas (MITRE)', href: '/app/dashboards#/view/triplesoc-attack', match: /^\/app\/dashboards.*view\/triplesoc-attack/ },
     { group: 'Configurar' },
     { label: 'AI Rules', icon: 'spark', tone: 'violet', does: 'Crear reglas de detección con IA', href: '/app/dashboards#/view/triplesoc-rules', match: /^\/app\/dashboards.*view\/triplesoc-rules/, badge: 'rules' },
-    { label: 'Entities', icon: 'db', tone: 'blue', does: 'Equipos protegidos y su estado', href: '/app/endpoints-summary', match: /^\/app\/endpoints-summary/ },
-    { label: 'Trust Zones', icon: 'shield', tone: 'green', does: 'Grupos de equipos y su vigilancia', href: '/app/endpoint-groups', match: /^\/app\/endpoint-groups/ },
-    { label: 'APIs', icon: 'code', tone: 'slate', does: 'Conexión técnica con el servidor', href: '/app/server-apis', match: /^\/app\/server-apis/ }
+    { label: 'Entities', icon: 'db', tone: 'blue', does: 'Equipos protegidos y su estado', href: '/app/dashboards#/view/triplesoc-entities', match: /^\/app\/dashboards.*view\/triplesoc-entities/ },
+    { label: 'Trust Zones', icon: 'shield', tone: 'green', does: 'Grupos de equipos y su vigilancia', href: '/app/dashboards#/view/triplesoc-zones', match: /^\/app\/dashboards.*view\/triplesoc-zones/ },
+    { label: 'APIs', icon: 'code', tone: 'slate', does: 'Conexión con el servidor y frescura de los datos', href: '/app/dashboards#/view/triplesoc-platform', match: /^\/app\/dashboards.*view\/triplesoc-platform/ }
   ];
   var ZONES = [
     { label: 'Anonymous', dot: 'red', href: alerts(TS.kql.critical), match: null },
