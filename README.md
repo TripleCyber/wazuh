@@ -55,10 +55,10 @@ que son las que usa `deploy/docker-compose.yml`. El dashboard tarda unos minutos
 (cd triplesoc-indexer          && ./build.sh 4.14.7)
 (cd triplesoc-manager          && ./build.sh 4.14.7)
 (cd triplesoc-dashboard        && ./build.sh 4.14.7)
-(cd triplesoc-incidents        && ./build.sh 1.2)
-(cd triplesoc-responder        && ./build.sh 0.18)
-(cd triplesoc-rulesmith        && ./build.sh 0.5)
-(cd triplesoc-webhook-receiver && ./build.sh 1.1)
+(cd triplesoc-incidents        && ./build.sh 1.3)
+(cd triplesoc-responder        && ./build.sh 0.19)
+(cd triplesoc-rulesmith        && ./build.sh 0.6)
+(cd triplesoc-webhook-receiver && ./build.sh 1.2)
 docker images 'triplesoc/*'
 ```
 

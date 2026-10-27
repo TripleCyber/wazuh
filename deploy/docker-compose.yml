@@ -133,7 +133,7 @@ services:
 
   # Receptor interno de los webhooks del manager (alertas >= 12). Solo imprime lo que recibe en sus logs.
   triplesoc-webhook-receiver:
-    image: 'triplesoc/webhook-receiver:1.1'
+    image: 'triplesoc/webhook-receiver:1.2'
     pull_policy: never
     container_name: triplesoc-webhook-receiver-${SID:-triplesoc}
     restart: unless-stopped
@@ -148,7 +148,7 @@ services:
 
   # Correlación: agrupa alertas en incidentes (índice triplesoc-incidents*).
   triplesoc-incidents:
-    image: 'triplesoc/incidents:1.2'
+    image: 'triplesoc/incidents:1.3'
     pull_policy: never
     container_name: triplesoc-incidents-${SID:-triplesoc}
     restart: unless-stopped
@@ -170,7 +170,7 @@ services:
 
   # Respuesta: propone (MODE=approve) o ejecuta acciones del catálogo cerrado sobre los incidentes.
   triplesoc-responder:
-    image: 'triplesoc/responder:0.18'
+    image: 'triplesoc/responder:0.19'
     pull_policy: never
     container_name: triplesoc-responder-${SID:-triplesoc}
     restart: unless-stopped
@@ -203,7 +203,7 @@ services:
 
   # Fábrica de reglas: redacta reglas a partir de lo que se pide en la pantalla AI Rules y las instala aprobadas.
   triplesoc-rulesmith:
-    image: 'triplesoc/rulesmith:0.5'
+    image: 'triplesoc/rulesmith:0.6'
     pull_policy: never
     container_name: triplesoc-rulesmith-${SID:-triplesoc}
     restart: unless-stopped

@@ -14,6 +14,11 @@ Historial de TripleSOC por fecha. El detalle de cada cambio está en `git log`.
 - `upgrade-check.sh`: las comprobaciones dentro de los contenedores usan Python, y distingue los índices de alertas de
   más de 30 días (la política ISM los deja en solo lectura a propósito) de un bloqueo real.
 - Desplegado y verificado en dev: canario VERDE (set de oro 99,88 %) y `upgrade-check` VERDE.
+- **Segunda pasada** (incidents 1.3, responder 0.19, rulesmith 0.6, webhook-receiver 1.2, BFF 0.3): fuera también
+  `_lzma`, `_bz2`, `_curses`, `_curses_panel` y `_sqlite3`, que ningún servicio usa. Desaparece `liblzma`, cuyo paquete
+  (xz-libs) se declara también GPL-2.0-or-later. Quedan solo musl (MIT), certificados raíz (MPL-2.0), OpenSSL
+  (Apache-2.0), libffi (MIT), libuuid (BSD-3-Clause) y zlib. El control de licencias evalúa ahora cada término de la
+  expresión: antes aceptaba "GPL-2.0-or-later AND … LGPL-2.1" por contener "LGPL". 42 MB por imagen.
 
 ## 2026-10-22 — Portal de entrada, acceso por rol y despliegue documentado
 

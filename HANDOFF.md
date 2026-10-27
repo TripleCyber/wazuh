@@ -15,10 +15,10 @@ Para instalar desde cero: [README.md](README.md). Historial: [CHANGELOG.md](CHAN
 | wazuh-indexer | `triplesoc/wazuh-indexer:4.14.7` | Oficial + etiqueta de Coolify |
 | wazuh-manager | `triplesoc/wazuh-manager:4.14.7` | Reglas, decoders, integración, Filebeat a `triplesoc-alerts-*` |
 | wazuh-dashboard | `triplesoc/wazuh-dashboard:fase2` | Construida con `triplesoc-dashboard/build.sh 4.14.7`; portal "Cúpula · noche" |
-| triplesoc-incidents | `triplesoc/incidents:1.2` | Imagen mínima (scratch, sin BusyBox ni apk) |
-| triplesoc-responder | `triplesoc/responder:0.18` | `MODE=approve`, IA por Groq; imagen mínima |
-| triplesoc-rulesmith | `triplesoc/rulesmith:0.5` | `MODE=install`; imagen mínima |
-| triplesoc-webhook-receiver | `triplesoc/webhook-receiver:1.1` | Imagen mínima |
+| triplesoc-incidents | `triplesoc/incidents:1.3` | Imagen mínima (scratch, sin BusyBox ni apk) |
+| triplesoc-responder | `triplesoc/responder:0.19` | `MODE=approve`, IA por Groq; imagen mínima |
+| triplesoc-rulesmith | `triplesoc/rulesmith:0.6` | `MODE=install`; imagen mínima |
+| triplesoc-webhook-receiver | `triplesoc/webhook-receiver:1.2` | Imagen mínima |
 
 Comprobación: `ops/upgrade-check.sh` en el servidor. El 26-10 sale VERDE (60 OK y un aviso: disco al 81 %).
 

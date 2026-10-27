@@ -20,13 +20,27 @@ ok()   { printf '  OK    %s\n' "$*"; }
 fail() { printf '  FAIL  %s\n' "$*"; FAILS=$((FAILS+1)); }
 sec()  { printf '\n[%s]\n' "$*"; }
 C=tsoc-canary-mgr-$$
-trap 'docker rm -f $C >/dev/null 2>&1' EXIT
+CONF=$(mktemp)
+trap 'docker rm -f $C >/dev/null 2>&1; rm -f "$CONF"' EXIT
+libre() { df --output=avail -BG / | tail -1 | tr -dc 0-9; }
+# Un manager nuevo con la detección de vulnerabilidades activa reconstruye su base (11 GB o más) en la capa del
+# contenedor: el 27-10 llenó el disco al 96 % y el indexer bloqueó la escritura. El canario no la necesita.
+[ "$(libre)" -ge 6 ] || { echo "RESULTADO: ROJO (solo $(libre) GB libres en /; el canario necesita 6)"; exit 1; }
+docker run --rm --entrypoint cat "$MGR" /var/ossec/etc/ossec.conf > "$CONF"
+sed -i '/<vulnerability-detection>/,/<\/vulnerability-detection>/ s#<enabled>yes</enabled>#<enabled>no</enabled>#' "$CONF"
+chmod 644 "$CONF"
 {
 echo "TripleSOC canario · $(date -u '+%F %T') UTC"
 echo "  manager=$MGR dashboard=$DSH responder=$RSP incidents=$INC rulesmith=$RUL"
 
 sec "1. Motor ($MGR)"
-docker run -d --name $C --network none --memory 1500m "$MGR" >/dev/null || fail "no arranca $MGR"
+docker run -d --name $C --network none --memory 1500m -v "$CONF":/wazuh-config-mount/etc/ossec.conf:ro "$MGR" >/dev/null \
+  || fail "no arranca $MGR"
+# Vigía: si aun así el disco baja de 4 GB libres, el manager desechable se elimina antes de que el indexer bloquee.
+( while docker inspect $C >/dev/null 2>&1; do
+    [ "$(libre)" -lt 4 ] && { docker rm -f $C >/dev/null 2>&1; printf '  FAIL  disco por debajo de 4 GB: manager desechable eliminado\n'; }
+    sleep 2
+  done ) &
 for i in $(seq 1 40); do docker exec $C /var/ossec/bin/wazuh-control status 2>/dev/null | grep -q 'wazuh-analysisd is running' && break; sleep 3; done
 docker exec $C /var/ossec/bin/wazuh-analysisd -t >/dev/null 2>&1 && ok "analysisd -t (configuración, reglas y decoders)" || fail "analysisd -t falla"
 for f in rules/triplesoc_rules.xml decoders/triplesoc_decoders.xml; do
@@ -42,6 +56,9 @@ while IFS='|' read -r want log; do
     [ "$got" = "$want" ] && ok "regla $want salta" || fail "esperada $want, salta '${got:-nada}': ${log:0:60}"
   fi
 done < "$SRC/ops/canary/logtest-cases.txt"
+grep -q '<enabled>no</enabled>' <(docker exec $C sed -n '/<vulnerability-detection>/,/<\/vulnerability-detection>/p' /var/ossec/etc/ossec.conf 2>/dev/null) \
+  && ok "manager desechable sin detección de vulnerabilidades" || fail "el manager desechable tiene la detección de vulnerabilidades activa"
+docker rm -f $C >/dev/null 2>&1   # solo hacía falta para el bloque 1
 
 sec "2. Dashboard ($DSH)"
 docker run --rm --network none -v "$SRC":/src:ro --entrypoint /usr/share/wazuh-dashboard/node/bin/node "$DSH" /src/ops/schema-test.js \
