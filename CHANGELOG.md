@@ -2,6 +2,21 @@
 
 Historial de TripleSOC por fecha. El detalle de cada cambio está en `git log`.
 
+## 2026-10-27 — Panel sin los plugins de Wazuh (GPL)
+
+- **Dashboard sin los plugins `wazuh`, `wazuhCore` y `wazuhCheckUpdates`** (GPL-2.0) ni los scripts de arranque de
+  Wazuh: queda OpenSearch Dashboards (Apache-2.0) con la capa TripleSOC. Imagen en una sola capa, para que los
+  archivos quitados no sigan dentro de las capas de la imagen base; arranque propio (`triplesoc-entrypoint.sh`).
+  `WAZUH_PLUGINS=1 ./build.sh` construye la variante anterior.
+- **Pantallas propias** que sustituyen a las del plugin (`overlay/triplesoc-endpoints-ui.js`): Entities (equipos y
+  estado), Trust Zones (grupos), Attack Map (MITRE ATT&CK de las alertas) y APIs (conexión con el manager y frescura
+  de los datos). Analytics abre la búsqueda nativa sobre `triplesoc-alerts-*`.
+- **Responder 0.20**: copia cada 5 min los equipos de la API de Wazuh a `triplesoc-incidents-agents` (sustituye a
+  `wazuh-monitoring`, que escribía el plugin). Las tarjetas de equipos del Overview leen ese índice.
+- Respaldo de los objetos guardados del panel en `.kibana_backup_20261027`. Volver atrás: imagen `fase2` en el
+  compose de Coolify.
+- Desplegado y verificado en dev: `upgrade-check` VERDE (62 OK) y canario VERDE.
+
 ## 2026-10-26 — Servicios propios sin componentes GPL
 
 - **Imagen mínima** para incidents 1.2, responder 0.18, rulesmith 0.5, webhook-receiver 1.1 y BFF 0.2

@@ -126,7 +126,6 @@ services:
     logging: *logging
     volumes:
       - wazuh-dashboard-config:/usr/share/wazuh-dashboard/data/wazuh/config
-      - wazuh-dashboard-custom:/usr/share/wazuh-dashboard/plugins/wazuh/public/assets/custom
       - ./certs/root-ca.pem:/usr/share/wazuh-dashboard/certs/root-ca.pem
       - ./config/wazuh_dashboard/opensearch_dashboards.yml:/usr/share/wazuh-dashboard/config/opensearch_dashboards.yml
       - ./config/wazuh_dashboard/wazuh.yml:/usr/share/wazuh-dashboard/data/wazuh/config/wazuh.yml
@@ -170,7 +169,7 @@ services:
 
   # Respuesta: propone (MODE=approve) o ejecuta acciones del catálogo cerrado sobre los incidentes.
   triplesoc-responder:
-    image: 'triplesoc/responder:0.19'
+    image: 'triplesoc/responder:0.20'
     pull_policy: never
     container_name: triplesoc-responder-${SID:-triplesoc}
     restart: unless-stopped
@@ -241,4 +240,3 @@ volumes:
   filebeat-etc:
   filebeat-var:
   wazuh-dashboard-config:
-  wazuh-dashboard-custom:
