@@ -110,13 +110,10 @@ services:
     ports:
       - '127.0.0.1:${DASHBOARD_PORT:-5601}:5601'   # solo local: publicar con un proxy HTTPS delante
     environment:
-      INDEXER_USERNAME: admin
-      INDEXER_PASSWORD: ${INDEXER_PASSWORD:?falta INDEXER_PASSWORD en .env}
-      WAZUH_API_URL: 'https://wazuh-manager'
+      # Solo la cuenta interna con la que el panel habla con el indexer. Sin los plugins de Wazuh, el panel ya no
+      # usa la API de Wazuh: sus pantallas leen el indexer con los permisos de cada usuario.
       DASHBOARD_USERNAME: kibanaserver
       DASHBOARD_PASSWORD: ${DASHBOARD_PASSWORD:?falta DASHBOARD_PASSWORD en .env}
-      API_USERNAME: wazuh-wui
-      API_PASSWORD: ${API_PASSWORD:?falta API_PASSWORD en .env}
     healthcheck:
       test: ['CMD-SHELL', 'curl -s -o /dev/null http://localhost:5601 || exit 1']
       interval: 30s
@@ -125,10 +122,8 @@ services:
       start_period: 180s
     logging: *logging
     volumes:
-      - wazuh-dashboard-config:/usr/share/wazuh-dashboard/data/wazuh/config
       - ./certs/root-ca.pem:/usr/share/wazuh-dashboard/certs/root-ca.pem
       - ./config/wazuh_dashboard/opensearch_dashboards.yml:/usr/share/wazuh-dashboard/config/opensearch_dashboards.yml
-      - ./config/wazuh_dashboard/wazuh.yml:/usr/share/wazuh-dashboard/data/wazuh/config/wazuh.yml
 
   # Receptor interno de los webhooks del manager (alertas >= 12). Solo imprime lo que recibe en sus logs.
   triplesoc-webhook-receiver:
@@ -239,4 +234,3 @@ volumes:
   wazuh-wodles:
   filebeat-etc:
   filebeat-var:
-  wazuh-dashboard-config:

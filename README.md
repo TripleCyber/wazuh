@@ -70,7 +70,6 @@ Cada imagen lleva la etiqueta `coolify.managed=true`: así la limpieza automáti
 cd deploy
 cp .env.example .env
 cp config/wazuh_indexer/internal_users.yml.example         config/wazuh_indexer/internal_users.yml
-cp config/wazuh_dashboard/wazuh.yml.example                config/wazuh_dashboard/wazuh.yml
 cp config/wazuh_dashboard/opensearch_dashboards.yml.example config/wazuh_dashboard/opensearch_dashboards.yml
 cp config/wazuh_cluster/authd.pass.example                 config/wazuh_cluster/authd.pass
 ```
@@ -81,7 +80,6 @@ Después, cambiar **todos** los valores `CAMBIAR-*`:
 |---|---|
 | `.env` | `INDEXER_PASSWORD`, `DASHBOARD_PASSWORD`, `API_PASSWORD` (mayúscula, minúscula, número y símbolo) y `SID` si se quiere otro nombre. |
 | `config/wazuh_indexer/internal_users.yml` | El **hash** de `INDEXER_PASSWORD` en `admin` y el de `DASHBOARD_PASSWORD` en `kibanaserver` (ver abajo). Las demás cuentas de demo se pueden borrar. |
-| `config/wazuh_dashboard/wazuh.yml` | `password` = el mismo `API_PASSWORD`. |
 | `config/wazuh_cluster/authd.pass` | Contraseña para registrar agentes (la pedirá el instalador de Windows). |
 | `config/wazuh_dashboard/opensearch_dashboards.yml` | Datos de Logto (`client_id`, `client_secret`, dominio) o borrar el bloque final si no se usa Logto. |
 
@@ -163,7 +161,7 @@ Solo si se usa Logto. Los scripts respaldan la configuración antes de tocarla y
 cd ..   # raíz del repo
 SID=triplesoc ops/oidc/indexer-oidc.sh     # el indexer acepta los usuarios de Logto y mapea sus roles
 SID=triplesoc ops/oidc/indexer-jwt-ec.sh   # valida los tokens ES384 de Logto (repetir si Logto rota su clave)
-SID=triplesoc ops/oidc/wazuh-rbac.sh       # roles de Logto -> permisos de la API de Wazuh
+# ops/oidc/wazuh-rbac.sh solo hace falta con la imagen anterior del panel (WAZUH_PLUGINS=1), que usa la API de Wazuh
 ```
 
 Roles en Logto (claim `roles`): `tsoc-admin` (administrador), `tsoc-analista` y `tsoc-lectura` (lectura).
@@ -237,11 +235,10 @@ El entorno de desarrollo actual corre en Coolify como un *Docker Compose* servic
 |---|---|
 | El indexer se reinicia en bucle | `vm.max_map_count` bajo, o poca RAM. Ver Requisitos. |
 | `pull access denied for triplesoc/...` | Falta construir esa imagen o la etiqueta no coincide con el compose (paso 2). |
-| Dashboard: "Wazuh API seems to be down" | `password` de `wazuh.yml` distinta de `API_PASSWORD`, o el manager aún arranca. |
 | Dashboard no entra con `admin` | El hash de `internal_users.yml` no corresponde a `INDEXER_PASSWORD` (se aplica solo en el primer arranque). |
 | Incidents / Responder reiniciándose | Falta `secrets/indexer/indexer_password` o tiene otro dueño: repetir el paso 6. |
 | Botón de Logto da error al volver | El proxy no es HTTPS, o `base_redirect_url` no coincide con el dominio. |
-| Usuario de Logto ve "Access not granted" | No tiene rol `tsoc-*` en Logto, o falta `ops/oidc/wazuh-rbac.sh`. |
+| Usuario de Logto ve "Access not granted" | No tiene rol `tsoc-*` en Logto, o falta `ops/oidc/indexer-oidc.sh` (mapeo de roles). |
 | No llegan alertas a `triplesoc-alerts-*` | Falta `triplesoc-indexer/setup.sh` (paso 6) o el disco del indexer pasa del 90 %. |
 
 ## Qué nunca va en git

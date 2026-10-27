@@ -14,7 +14,7 @@ Para instalar desde cero: [README.md](README.md). Historial: [CHANGELOG.md](CHAN
 |---|---|---|
 | wazuh-indexer | `triplesoc/wazuh-indexer:4.14.7` | Oficial + etiqueta de Coolify |
 | wazuh-manager | `triplesoc/wazuh-manager:4.14.7` | Reglas, decoders, integración, Filebeat a `triplesoc-alerts-*` |
-| wazuh-dashboard | `triplesoc/wazuh-dashboard:sinplugins-20261027` | `TAG=sinplugins-20261027 triplesoc-dashboard/build.sh 4.14.7`: sin los plugins de Wazuh (GPL); pantallas propias Entities, Trust Zones, Attack Map y APIs |
+| wazuh-dashboard | `triplesoc/wazuh-dashboard:4.14.7` | `triplesoc-dashboard/build.sh 4.14.7`: sin los plugins de Wazuh (GPL); pantallas propias Entities, Trust Zones, Attack Map y APIs |
 | triplesoc-incidents | `triplesoc/incidents:1.3` | Imagen mínima (scratch, sin BusyBox ni apk) |
 | triplesoc-responder | `triplesoc/responder:0.20` | `MODE=approve`, IA por Groq; imagen mínima; inventario de equipos cada 5 min |
 | triplesoc-rulesmith | `triplesoc/rulesmith:0.6` | `MODE=install`; imagen mínima |
