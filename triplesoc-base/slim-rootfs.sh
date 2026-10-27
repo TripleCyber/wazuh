@@ -8,9 +8,11 @@ R=${1:-/rootfs}
 PYLIB=$(python -c 'import sysconfig; print(sysconfig.get_path("stdlib"))')
 
 # Módulos que enlazan librerías GPL y que los servicios no usan: readline y gdbm (_gdbm, _dbm) son GPL-3.0;
-# nis (obsoleto) arrastra libnsl, libtirpc, Kerberos, keyutils y com_err.
+# nis (obsoleto) arrastra libnsl, libtirpc, Kerberos, keyutils y com_err. Tampoco se usan compresión, terminal ni
+# SQLite: _lzma (xz-libs, paquete etiquetado también GPL-2.0-or-later), _bz2, _curses, _curses_panel y _sqlite3.
 rm -f "$PYLIB"/lib-dynload/readline.*.so "$PYLIB"/lib-dynload/_gdbm.*.so "$PYLIB"/lib-dynload/_dbm.*.so \
-      "$PYLIB"/lib-dynload/nis.*.so
+      "$PYLIB"/lib-dynload/nis.*.so "$PYLIB"/lib-dynload/_lzma.*.so "$PYLIB"/lib-dynload/_bz2.*.so \
+      "$PYLIB"/lib-dynload/_curses.*.so "$PYLIB"/lib-dynload/_curses_panel.*.so "$PYLIB"/lib-dynload/_sqlite3.*.so
 
 # Intérprete y biblioteca estándar, sin pruebas, IDLE, tkinter ni pip (no hacen falta en ejecución).
 mkdir -p "$R/usr/local" "$R/lib" "$R/etc/ssl/certs" "$R/usr/share/triplesoc"
@@ -50,10 +52,14 @@ for l in /lib/ld-musl-*.so.1 /etc/ssl/certs/ca-certificates.crt $(cat /tmp/libs.
   pkg=$(apk info -W "$(readlink -f "$l")" 2>/dev/null | sed -n 's/.* is owned by //p' | head -1)
   lic=$(apk list -I 2>/dev/null | grep "^$pkg " | sed -n 's/.*(\(.*\)).*/\1/p' | tail -1)
   echo "$l  $pkg  ${lic:-?}" >> "$out"
-  case "$lic" in
-    *LGPL*|*GCC-exception*|*"WITH "*) ;;
-    *GPL*) echo "ERROR: $l ($pkg) es $lic" >&2; bad=1 ;;
-  esac
+  [ -n "$lic" ] || { echo "ERROR: $l sin paquete ni licencia conocidos" >&2; bad=1; }
+  # Cada término de la expresión por separado: "GPL-2.0-or-later AND LGPL-2.1" falla por el primero.
+  for t in $(echo "$lic" | sed 's/ WITH /+WITH+/g' | tr '()' '  '); do
+    case "$t" in
+      *+WITH+*|*LGPL*|AND|OR) ;;
+      *GPL*) echo "ERROR: $l ($pkg) es $lic" >&2; bad=1 ;;
+    esac
+  done
 done
 cat "$out"
 [ "$bad" -eq 0 ] || { echo "ERROR: la imagen mínima llevaría una librería GPL" >&2; exit 1; }
