@@ -20,4 +20,8 @@ docker build \
   .
 
 echo "Imagen lista: $IMAGE:$TAG"
+# La imagen se aplana en una capa: la construcción deja varios GB de caché intermedia que no se reutiliza.
+# El 27-10 llevó el disco al 89 % (al 90 % el indexer deja de crear índices). KEEP_BUILD_CACHE=1 la conserva.
+if [[ "${KEEP_BUILD_CACHE:-0}" != 1 ]]; then docker builder prune -f >/dev/null && echo "Caché de construcción liberada"; fi
+
 if [[ "${PUSH:-0}" == 1 ]]; then docker push "$IMAGE:$TAG"; fi
